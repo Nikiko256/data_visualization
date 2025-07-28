@@ -1,6 +1,5 @@
 <?php
 
-echo "OKAY"
 $device_id = $_POST['id'] ?? 'UNKNOWN';
 $temp = $_POST['temp'] ?? null;
 $hum = $_POST['hum'] ?? null;
