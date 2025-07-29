@@ -1,14 +1,8 @@
 <?php
-// ————————————————————————————
-// 0) Turn on all PHP errors/warnings (will show up in your response)
-// ————————————————————————————
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// ————————————————————————————
-// 1) Tell mysqli to throw exceptions on errors
-// ————————————————————————————
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 require_once __DIR__ . '/load_env.php';
@@ -16,32 +10,77 @@ loadEnv(__DIR__ . '/.env');
 
 header('Content-Type: application/json');
 
-// 2. Read creds from .env
-$host = $_ENV['DB_HOST'];
-$db   = $_ENV['DB_NAME'];
-$user = $_ENV['DB_USER'];
-$pass = $_ENV['DB_PASS'];
-
-// 3. Connect with mysqli (procedural style)
-//    will now *throw* a mysqli_sql_exception if it fails
-$dbcnx = mysqli_connect($host, $user, $pass, $db);
-
-// 4. Run your query
-$sql    = "SELECT * FROM sensor_data ORDER BY create_at DESC";
-$result = mysqli_query($dbcnx, $sql);
-
-// 5. Fetch all rows into an array
-$data = [];
-while ($row = mysqli_fetch_assoc($result)) {
-    $data[] = $row;
+// Step 1: Get the input data (expects JSON: { "s_name": "Station Name" })
+$input = trim(file_get_contents('php://input'));
+if (!$input) {
+    http_response_code(400);
+    echo json_encode(["status" => "error", "message" => "Missing JSON payload"]);
+    exit;
 }
 
-// 6. Return JSON
-echo json_encode([
-    'status' => 'success',
-    'data'   => $data
-]);
+$data = json_decode($input, true);
+if (json_last_error() !== JSON_ERROR_NONE || empty($data['s_name'])) {
+    http_response_code(422);
+    echo json_encode(["status" => "error", "message" => "Invalid JSON or missing 's_name'"]);
+    exit;
+}
+$s_name = trim($data['s_name']);
 
-// 7. Clean up
-mysqli_free_result($result);
-mysqli_close($dbcnx);
+try {
+    // Step 2: Connect to DB
+    $host = $_ENV['DB_HOST'];
+    $db   = $_ENV['DB_NAME'];
+    $user = $_ENV['DB_USER'];
+    $pass = $_ENV['DB_PASS'];
+    $dbcnx = mysqli_connect($host, $user, $pass, $db);
+
+    // Step 3: Find s_id by s_name
+    $stmt = mysqli_prepare($dbcnx, "SELECT s_id FROM sensors WHERE s_name = ?");
+    mysqli_stmt_bind_param($stmt, 's', $s_name);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_bind_result($stmt, $s_id);
+    if (!mysqli_stmt_fetch($stmt)) {
+        // no matching station name
+        mysqli_stmt_close($stmt);
+        http_response_code(404);
+        echo json_encode(["status" => "error", "message" => "Station not found"]);
+        exit;
+    }
+    mysqli_stmt_close($stmt);
+
+    // Step 4: Sanitize table name
+    $table = preg_replace('/[^a-zA-Z0-9_]/', '_', $s_id);
+
+    // Step 5: Check that table exists
+    $check = mysqli_query($dbcnx, "SHOW TABLES LIKE '{$table}'");
+    if (mysqli_num_rows($check) === 0) {
+        http_response_code(404);
+        echo json_encode(["status" => "error", "message" => "Data table for station '{$s_name}' does not exist"]);
+        exit;
+    }
+
+    // Step 6: Fetch all data
+    $result = mysqli_query($dbcnx, "SELECT * FROM `{$table}` ORDER BY created_at ASC");
+    $rows = [];
+    while ($row = mysqli_fetch_assoc($result)) {
+        $rows[] = $row;
+    }
+
+    // Step 7: Return JSON response
+    echo json_encode([
+        "status"   => "success",
+        "s_id"     => $s_id,
+        "s_name"   => $s_name,
+        "data"     => $rows
+    ]);
+
+    mysqli_close($dbcnx);
+
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode([
+        "status"  => "error",
+        "message" => $e->getMessage()
+    ]);
+}
+?>
