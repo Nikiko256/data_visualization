@@ -35,7 +35,7 @@ try {
     $dbcnx = mysqli_connect($host, $user, $pass, $db);
 
     // Step 3: Find s_id by s_name
-    $stmt = mysqli_prepare($dbcnx, "SELECT s_id FROM sensors WHERE s_name = ?");
+    $stmt = mysqli_prepare($dbcnx, "SELECT s_id FROM stations WHERE s_name = ?");
     mysqli_stmt_bind_param($stmt, 's', $s_name);
     mysqli_stmt_execute($stmt);
     mysqli_stmt_bind_result($stmt, $s_id);

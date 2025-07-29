@@ -99,24 +99,24 @@ try {
     mysqli_stmt_execute($stmt);
     mysqli_stmt_close($stmt);
 
-    // Step 7: Insert into `sensors` if not exists
-    $check_sensor = mysqli_prepare($dbcnx, "SELECT s_id FROM sensors WHERE s_id = ?");
-    mysqli_stmt_bind_param($check_sensor, 's', $s_id);
-    mysqli_stmt_execute($check_sensor);
-    mysqli_stmt_store_result($check_sensor);
+    // Step 7: Insert into `stations` if not exists
+    $check_station = mysqli_prepare($dbcnx, "SELECT s_id FROM stations WHERE s_id = ?");
+    mysqli_stmt_bind_param($check_station, 's', $s_id);
+    mysqli_stmt_execute($check_station);
+    mysqli_stmt_store_result($check_station);
 
-    if (mysqli_stmt_num_rows($check_sensor) === 0) {
-        mysqli_stmt_close($check_sensor);
+    if (mysqli_stmt_num_rows($check_station) === 0) {
+        mysqli_stmt_close($check_station);
 
-        $insert_sensor = mysqli_prepare(
+        $insert_station = mysqli_prepare(
             $dbcnx,
-            "INSERT INTO sensors (s_id, s_name) VALUES (?, ?)"
+            "INSERT INTO stations (s_id, s_name) VALUES (?, ?)"
         );
-        mysqli_stmt_bind_param($insert_sensor, 'ss', $s_id, $s_name);
-        mysqli_stmt_execute($insert_sensor);
-        mysqli_stmt_close($insert_sensor);
+        mysqli_stmt_bind_param($insert_station, 'ss', $s_id, $s_name);
+        mysqli_stmt_execute($insert_station);
+        mysqli_stmt_close($insert_station);
     } else {
-        mysqli_stmt_close($check_sensor);
+        mysqli_stmt_close($check_station);
     }
 
     // Step 8: Return response
