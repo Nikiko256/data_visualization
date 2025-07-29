@@ -19,7 +19,7 @@ try {
     $dbcnx = mysqli_connect($host, $user, $pass, $db);
 
     // Query all station names in alphabetical order
-    $sql = "SELECT s_name FROM sensors ORDER BY s_name ASC";
+    $sql = "SELECT s_name FROM stations ORDER BY s_name ASC";
     $result = mysqli_query($dbcnx, $sql);
 
     $stations = [];
