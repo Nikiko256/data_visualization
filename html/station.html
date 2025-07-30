@@ -1,9 +1,31 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Hello World</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Station Details</title>
+  <!-- Link to existing main stylesheet -->
+  <link rel="stylesheet" href="main.css">
 </head>
 <body>
-  <h1>Hello, World!</h1>
+  <div class="container">
+    <header>
+      <h1 id="stationTitle">Station: </h1>
+    </header>
+
+    <section class="controls">
+      <label for="nodeSelect">Choose a node:</label>
+      <select id="nodeSelect">
+        <option value="">--</option>
+      </select>
+    </section>
+
+    <section id="dataSection">
+      <!-- Fetched node data will be rendered here -->
+    </section>
+  </div>
+
+  <!-- Station-specific JS -->
+  <script src="station.js"></script>
 </body>
 </html>
