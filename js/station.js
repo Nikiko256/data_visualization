@@ -1,6 +1,8 @@
-// Helper to read URL query params
+// Reads station (s_name) from URL and populates node dropdown, then fetches node data
+
+// Helper: get URL parameter
 function getParam(name) {
-  const url = new URL(window.location);
+  const url = new URL(window.location.href);
   return url.searchParams.get(name);
 }
 
@@ -13,8 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Display station name
   titleEl.textContent = `Station: ${sName}`;
 
-  // Fetch node names
-  fetch('get_node_names.php', {
+  // Fetch node names for this station
+  fetch('https://users.iee.ihu.gr/~iee2019074/php/get_node_names.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ s_name: sName })
@@ -33,18 +35,17 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     })
     .catch(err => {
-      console.error(err);
+      console.error('Error fetching node names:', err);
       dataSection.innerHTML = '<p class="error">Unable to load node list.</p>';
     });
 
-  // On node selection
+  // When a node is selected, fetch its data
   selectEl.addEventListener('change', () => {
     const node = selectEl.value;
-    dataSection.innerHTML = ''; // clear
+    dataSection.innerHTML = ''; // clear previous
     if (!node) return;
 
-    // Fetch data for that node
-    fetch('get_node.php', {
+    fetch('https://users.iee.ihu.gr/~iee2019074/php/get_node.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ s_name: sName, n_name: node })
@@ -52,19 +53,19 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(res => res.json())
       .then(json => {
         if (json.status === 'success') {
-          renderData(json.data);
+          renderTable(json.data);
         } else {
           dataSection.innerHTML = `<p class="error">${json.message}</p>`;
         }
       })
       .catch(err => {
-        console.error(err);
+        console.error('Error fetching node data:', err);
         dataSection.innerHTML = '<p class="error">Unable to load node data.</p>';
       });
   });
 
-  // Render table of results
-  function renderData(rows) {
+  // Renders a table for the data rows
+  function renderTable(rows) {
     if (!rows.length) {
       dataSection.innerHTML = '<p>No data for this node.</p>';
       return;
@@ -72,14 +73,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const table = document.createElement('table');
     table.className = 'data-table';
-    // Header
-    const header = table.insertRow();
+
+    // Header row
+    const headerRow = table.insertRow();
     Object.keys(rows[0]).forEach(col => {
       const th = document.createElement('th');
       th.textContent = col;
-      header.appendChild(th);
+      headerRow.appendChild(th);
     });
-    // Body
+
+    // Data rows
     rows.forEach(row => {
       const tr = table.insertRow();
       Object.values(row).forEach(val => {
@@ -87,6 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
         td.textContent = val;
       });
     });
+
     dataSection.appendChild(table);
   }
 });
