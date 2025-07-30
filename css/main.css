@@ -1,0 +1,61 @@
+/* ---------------------- home page ---------------------- */
+
+
+/* Basic reset */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f7fa;
+      color: #333;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    header {
+      padding: 20px;
+      border-bottom: 1px solid #e1e4e8;
+      text-align: center;
+      background-color: #fff;
+    }
+    header h1 {
+      font-size: 1.5rem;
+      color: #2c3e50;
+    }
+    .search-box {
+      padding: 15px 20px;
+      border-bottom: 1px solid #e1e4e8;
+      background-color: #fafbfc;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 10px 15px;
+      font-size: 1rem;
+      border: 1px solid #ccd0d5;
+      border-radius: 4px;
+    }
+    .stations-list {
+      list-style: none;
+    }
+    .station-item {
+      padding: 15px 20px;
+      border-bottom: 1px solid #e1e4e8;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .station-item:hover {
+      background-color: #f0f2f5;
+    }
+    .station-item:last-child {
+      border-bottom: none;
+    }
+
+
+
+
+    /* ----------------------- station  page ---------------------- */
