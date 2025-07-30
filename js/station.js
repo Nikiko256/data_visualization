@@ -1,96 +1,64 @@
-// Reads station (s_name) from URL and populates node dropdown, then fetches node data
+// station.js
 
-// Helper: get URL parameter
+// Simple URL-param helper
 function getParam(name) {
-  const url = new URL(window.location.href);
-  return url.searchParams.get(name);
+  return new URL(location).searchParams.get(name);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const sName = getParam('s_name');
-  const titleEl = document.getElementById('stationTitle');
+  const sName    = getParam('s_name');
+  const titleEl  = document.getElementById('stationTitle');
   const selectEl = document.getElementById('nodeSelect');
-  const dataSection = document.getElementById('dataSection');
+  const container= document.getElementById('dataSection');
 
-  // Display station name
   titleEl.textContent = `Station: ${sName}`;
 
-  // Fetch node names for this station
+  // 1) Populate the node dropdown
   fetch('https://users.iee.ihu.gr/~iee2019074/php/get_node_names.php', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type':'application/json' },
     body: JSON.stringify({ s_name: sName })
   })
-    .then(res => res.json())
-    .then(json => {
-      if (json.status === 'success') {
-        json.node_names.forEach(name => {
-          const opt = document.createElement('option');
-          opt.value = name;
-          opt.textContent = name;
-          selectEl.appendChild(opt);
+    .then(r=>r.json())
+    .then(j => {
+      if (j.status==='success') {
+        j.node_names.forEach(n=>{
+          const o = document.createElement('option');
+          o.value = n; o.textContent = n;
+          selectEl.appendChild(o);
         });
       } else {
-        dataSection.innerHTML = `<p class="error">${json.message}</p>`;
+        container.innerHTML = `<p class="error">${j.message}</p>`;
       }
     })
-    .catch(err => {
-      console.error('Error fetching node names:', err);
-      dataSection.innerHTML = '<p class="error">Unable to load node list.</p>';
+    .catch(err=>{
+      console.error(err);
+      container.innerHTML = `<p class="error">Failed loading nodes</p>`;
     });
 
-  // When a node is selected, fetch its data
+  // 2) When a node is chosen, fetch ALL its data once, then render per-chart controls
   selectEl.addEventListener('change', () => {
     const node = selectEl.value;
-    dataSection.innerHTML = ''; // clear previous
+    container.innerHTML = '';
     if (!node) return;
 
     fetch('https://users.iee.ihu.gr/~iee2019074/php/get_node.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
       body: JSON.stringify({ s_name: sName, n_name: node })
     })
-      .then(res => res.json())
-      .then(json => {
-        if (json.status === 'success') {
-          renderTable(json.data);
+      .then(r=>r.json())
+      .then(j => {
+        if (j.status==='success') {
+          // Pass station & node so each chart can re-query later
+          graphData(j.data, sName, node);
         } else {
-          dataSection.innerHTML = `<p class="error">${json.message}</p>`;
+          container.innerHTML = `<p class="error">${j.message}</p>`;
         }
       })
-      .catch(err => {
-        console.error('Error fetching node data:', err);
-        dataSection.innerHTML = '<p class="error">Unable to load node data.</p>';
+      .catch(err=>{
+        console.error(err);
+        container.innerHTML = `<p class="error">Failed loading data</p>`;
       });
   });
-
-  // Renders a table for the data rows
-  function renderTable(rows) {
-    if (!rows.length) {
-      dataSection.innerHTML = '<p>No data for this node.</p>';
-      return;
-    }
-
-    const table = document.createElement('table');
-    table.className = 'data-table';
-
-    // Header row
-    const headerRow = table.insertRow();
-    Object.keys(rows[0]).forEach(col => {
-      const th = document.createElement('th');
-      th.textContent = col;
-      headerRow.appendChild(th);
-    });
-
-    // Data rows
-    rows.forEach(row => {
-      const tr = table.insertRow();
-      Object.values(row).forEach(val => {
-        const td = tr.insertCell();
-        td.textContent = val;
-      });
-    });
-
-    dataSection.appendChild(table);
-  }
 });
