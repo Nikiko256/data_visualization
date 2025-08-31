@@ -1,0 +1,7 @@
+# Ignore dotenv files anywhere in the repo
+.env
+.env.*
+
+# But keep example env files under version control
+!.env.example
+!.env.*.example
