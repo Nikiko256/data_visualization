@@ -44,3 +44,17 @@ document.addEventListener('DOMContentLoaded', () => {
         renderList(filtered);
       });
     });
+
+
+
+
+
+
+    // enhance the hover glow effect
+    document.addEventListener('pointermove', e => {
+  const t = e.target.closest('.station-item');
+  if(!t) return;
+  const r = t.getBoundingClientRect();
+  t.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+  t.style.setProperty('--my', (e.clientY - r.top) + 'px');
+});

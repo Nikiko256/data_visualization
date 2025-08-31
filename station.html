@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Station Details</title>
-  <link rel="stylesheet" href="css/main.css">
-  <!-- Chart.js from CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <link rel="stylesheet" href="css/main.css" />
+<!-- change ONLY the script order + add defer -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+<script src="js/graph.js" defer></script>   <!-- now first -->
+<script src="js/station.js" defer></script> <!-- then station.js -->
+
 </head>
 <body>
   <div class="container">
@@ -21,12 +25,25 @@
       </select>
     </section>
 
-    <section id="dataSection" class="charts-container">
-      <!-- Each chart + its time dropdown will be injected here -->
-    </section>
+    <section id="dataSection" class="charts-container"></section>
   </div>
 
-  <script src="js/station.js"></script>
-  <script src="js/graph.js"></script>
+
+  <!-- Modal root -->
+<div id="chartModal" class="modal" aria-hidden="true">
+  <div class="modal-backdrop" data-close-modal></div>
+
+  <div class="modal-dialog" role="dialog" aria-modal="true" aria-label="Expanded chart">
+    <div class="modal-body">
+      <!-- JS will inject a large chart-card here -->
+    </div>
+
+    <!-- Footer with Close button -->
+    <div class="modal-footer">
+      <button class="btn" type="button" data-close-modal>Close</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
