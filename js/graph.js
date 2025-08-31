@@ -1,5 +1,16 @@
 // graph.js
 
+
+// Small helper to create elements
+function el(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text != null) node.textContent = text;
+  return node;
+}
+
+
+
 // ===============================
 // Theme bridge for Chart.js
 // ===============================
@@ -47,7 +58,7 @@
   ['x','y'].forEach(k => Chart.overrides.line.scales[k] = axisCfg);
 })();
 
-// --- shared POST helper (same fallback as in station.js) ---
+// --- shared POST helper (JSON first, then form-encoded fallback) ---
 async function postSmart(url, payload) {
   try {
     const r = await fetch(url, {
@@ -78,7 +89,7 @@ async function postSmart(url, payload) {
   }
 }
 
-// ============ Modal utilities (lazy DOM lookup, so no defer required) ============
+// ============ Modal utilities ============
 const modal = (() => {
   let activeChart = null;
 
@@ -95,7 +106,7 @@ const modal = (() => {
 
     const { card, chart } = contentBuilder();
     body.appendChild(card);
-    activeChart = chart;
+    activeChart = chart || null;
 
     root.classList.add('open');
     root.setAttribute('aria-hidden', 'false');
@@ -127,167 +138,7 @@ const modal = (() => {
   return { open, close };
 })();
 
-// Small helper
-const el = (tag, className, content) => {
-  const e = document.createElement(tag);
-  if (className) e.className = className;
-  if (content != null) e.textContent = content;
-  return e;
-};
-
-// Build one chart-card (reusable for page and for modal)
-function buildChartCard({ field, rows, station, node, large = false }) {
-  const card = el('div', 'chart-card');
-
-  // Header
-  const head = el('div', 'chart-head');
-  const title = el('div', 'chart-title', `${rows[0]?.n_name || ''} — ${field}`);
-
-  const select = el('select', 'time-select');
-  [
-    ['All time','all'],
-    ['Last 24h','24'],
-    ['Last 48h','48'],
-    ['Last week','168'],
-    ['Last month','720'],
-    ['Last year','8760'],
-    ['Last 5 years','43800'],
-  ].forEach(([lbl, val]) => {
-    const opt = document.createElement('option');
-    opt.value = val; opt.textContent = lbl;
-    select.appendChild(opt);
-  });
-
-  // Expand button (only on small cards; modal doesn't need it)
-  let expandBtn = null;
-  if (!large) {
-    expandBtn = el('button', 'expand-btn', '⤢');
-    expandBtn.type = 'button';
-    expandBtn.title = 'Expand';
-  }
-
-  // Layout head: title | [select, expand]
-  const rightBox = el('div');
-  rightBox.style.display = 'flex';
-  rightBox.style.alignItems = 'center';
-  rightBox.style.gap = '8px';
-  rightBox.appendChild(select);
-  if (expandBtn) rightBox.appendChild(expandBtn);
-
-  head.appendChild(title);
-  head.appendChild(rightBox);
-
-  window.upgradeToDropdown(select, { variant: 'time' });
-
-  // Chart area
-  const box = el('div', 'chart-box');
-  const canvas = el('canvas', 'chart-canvas');
-  const skeleton = el('div', 'chart-skeleton');
-
-  card.appendChild(head);
-  card.appendChild(skeleton);
-  box.appendChild(canvas);
-  card.appendChild(box);
-
-  // Init chart
-  const labels = rows.map(r => r.created_at);
-  const values = rows.map(r => {
-    const v = parseFloat(r[field]);
-    return Number.isFinite(v) ? v : null;
-  });
-
-  const ctx = canvas.getContext('2d');
-  const chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: field,
-        data: values,
-        borderWidth: 2,
-        borderColor: makeLineGradient(ctx),
-        backgroundColor: makeFillGradient(ctx),
-        fill: true,
-      }]
-    },
-    options: {
-      responsive: true,
-      resizeDelay: 150,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { drawBorder: false }, title: { display: false } },
-        y: { grid: { drawBorder: false }, title: { display: false } }
-      }
-    }
-  });
-
-  skeleton.remove();
-
-  // Time change: refetch and update this chart only
-  select.addEventListener('change', async () => {
-    const val = select.value;
-    let url, body;
-    if (val === 'all') {
-      url  = 'https://users.iee.ihu.gr/~iee2019074/php/get_node.php';
-      body = { s_name: station, n_name: node };
-    } else {
-      url  = 'https://users.iee.ihu.gr/~iee2019074/php/get_node_by_time.php';
-      body = { s_name: station, n_name: node, hours: parseInt(val, 10) };
-    }
-
-    card.classList.add('skeleton');
-    try {
-      const j = await postSmart(url, body);
-      card.classList.remove('skeleton');
-
-      if (j.status === 'success' && Array.isArray(j.data)) {
-        const newRows = j.data;
-        chart.data.labels = newRows.map(r => r.created_at);
-        chart.data.datasets[0].data = newRows.map(r => {
-          const v = parseFloat(r[field]);
-          return Number.isFinite(v) ? v : null;
-        });
-        chart.update();
-      } else {
-        showInlineError(card, j?.message || 'No data for selected range.');
-      }
-    } catch (err) {
-      card.classList.remove('skeleton');
-      console.error(`Error fetching ${field}:`, err);
-      showInlineError(card, `Network/server error: ${String(err.message || err)}`);
-    }
-  });
-
-  // Expand action
-  if (expandBtn) {
-    expandBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      modal.open(() => {
-        const big = buildChartCard({ field, rows, station, node, large: true });
-        return { card: big.card, chart: big.chart };
-      });
-    });
-  }
-
-  return { card, chart };
-}
-
-function showInlineError(card, msg){
-  let p = card.querySelector('.chart-error');
-  if (!p) {
-    p = document.createElement('p');
-    p.className = 'chart-error';
-    p.style.color = 'var(--muted)';
-    p.style.margin = '8px 6px 0';
-    card.appendChild(p);
-  }
-  p.textContent = msg;
-}
-
-
-// ---- tiny custom dropdown that mirrors a native <select> ----
+// ---------- Tiny custom dropdown that mirrors <select> ----------
 window.upgradeToDropdown = function upgradeToDropdown(select, { variant = 'time' } = {}) {
   if (!select || select.dataset.ddUpgraded) return;
   select.dataset.ddUpgraded = '1';
@@ -382,11 +233,403 @@ window.upgradeToDropdown = function upgradeToDropdown(select, { variant = 'time'
   });
 };
 
+// ---------- Labels & wind helpers ----------
+const FRIENDLY_LABELS = {
+  soilTemp: 'Soil Temperature',
+  soilMoist: 'Soil Moisture',
+  airTemp: 'Air Temperature',
+  airHumid: 'Air Humidity',
+  pressure: 'Air Pressure',
+  airPressure: 'Air Pressure',
+  temp: 'Temperature',
+  humid: 'Humidity',
+  co2: 'CO₂',
+  tvoc: 'tVOC',
+  light: 'Light',
+  battery: 'Battery',
+  windSpeed: 'Wind Speed',
+  windGust: 'Wind Gust',
+};
+
+function prettyLabel(key){
+  if (FRIENDLY_LABELS[key]) return FRIENDLY_LABELS[key];
+  // camelCase / snake_case -> Title Case
+  const spaced = String(key)
+    .replace(/[_-]+/g,' ')
+    .replace(/([a-z])([A-Z])/g,'$1 $2')
+    .toLowerCase();
+  return spaced.replace(/\b\w/g, m => m.toUpperCase());
+}
+
+const DIRS = [
+  {abbr:'N',  full:'North',       deg:  0, char:'↑'},
+  {abbr:'NE', full:'North-East',  deg: 45, char:'↗'},
+  {abbr:'E',  full:'East',        deg: 90, char:'→'},
+  {abbr:'SE', full:'South-East',  deg:135, char:'↘'},
+  {abbr:'S',  full:'South',       deg:180, char:'↓'},
+  {abbr:'SW', full:'South-West',  deg:225, char:'↙'},
+  {abbr:'W',  full:'West',        deg:270, char:'←'},
+  {abbr:'NW', full:'North-West',  deg:315, char:'↖'},
+];
+
+const WORD_TO_DIR = new Map([
+  ['N','N'],['NORTH','N'],
+  ['NE','NE'],['NORTHEAST','NE'],['NORTH EAST','NE'],['NORTH-EAST','NE'],
+  ['E','E'],['EAST','E'],
+  ['SE','SE'],['SOUTHEAST','SE'],['SOUTH EAST','SE'],['SOUTH-EAST','SE'],
+  ['S','S'],['SOUTH','S'],
+  ['SW','SW'],['SOUTHWEST','SW'],['SOUTH WEST','SW'],['SOUTH-WEST','SW'],
+  ['W','W'],['WEST','W'],
+  ['NW','NW'],['NORTHWEST','NW'],['NORTH WEST','NW'],['NORTH-WEST','NW'],
+]);
+
+function normDeg(d){ d = Number(d); if (!Number.isFinite(d)) return null; d%=360; if (d<0) d+=360; return d; }
+function parseWindValue(val){
+  if (val == null) return null;
+  if (typeof val === 'number') return normDeg(val);
+  const s = String(val).trim();
+  // try pure number first
+  const m = s.match(/-?\d+(\.\d+)?/);
+  if (m) { const d = normDeg(parseFloat(m[0])); if (d!=null) return d; }
+  const key = s.replace(/\s+/g,' ').replace(/[^A-Za-z]/g,' ').trim().toUpperCase();
+  const abbr = WORD_TO_DIR.get(key);
+  if (abbr){
+    const dir = DIRS.find(d => d.abbr === abbr);
+    return dir?.deg ?? null;
+  }
+  return null;
+}
+function dirFromDeg(deg){
+  if (deg==null) return null;
+  const idx = Math.round(deg / 45) % 8;
+  return DIRS[idx];
+}
+
+// ---------- Reusable CHART card ----------
+function buildChartCard({ field, rows, station, node, large = false }) {
+  const card = el('div', 'chart-card');
+
+  // Header
+  const head = el('div', 'chart-head');
+  const nodeName = rows[0]?.n_name || '';
+  const title = el('div', 'chart-title', `${nodeName}: ${prettyLabel(field)}`);
+
+  const select = el('select', 'time-select');
+  [
+    ['All time','all'],
+    ['Last 24h','24'],
+    ['Last 48h','48'],
+    ['Last week','168'],
+    ['Last month','720'],
+    ['Last year','8760'],
+    ['Last 5 years','43800'],
+  ].forEach(([lbl, val]) => {
+    const opt = document.createElement('option');
+    opt.value = val; opt.textContent = lbl;
+    select.appendChild(opt);
+  });
+
+  // Expand button (only on small cards; modal doesn't need it)
+  let expandBtn = null;
+  if (!large) {
+    expandBtn = el('button', 'expand-btn', '⤢');
+    expandBtn.type = 'button';
+    expandBtn.title = 'Expand';
+  }
+
+  // Layout head: title | [select, expand]
+  const rightBox = el('div');
+  rightBox.style.display = 'flex';
+  rightBox.style.alignItems = 'center';
+  rightBox.style.gap = '8px';
+  rightBox.appendChild(select);
+  if (expandBtn) rightBox.appendChild(expandBtn);
+
+  head.appendChild(title);
+  head.appendChild(rightBox);
+
+  window.upgradeToDropdown(select, { variant: 'time' });
+
+  // Chart area
+  const box = el('div', 'chart-box');
+  const canvas = el('canvas', 'chart-canvas');
+  const skeleton = el('div', 'chart-skeleton');
+
+  card.appendChild(head);
+  card.appendChild(skeleton);
+  box.appendChild(canvas);
+  card.appendChild(box);
+
+  // Init chart
+  const labels = rows.map(r => r.created_at);
+  const values = rows.map(r => {
+    const v = parseFloat(r[field]);
+    return Number.isFinite(v) ? v : null;
+  });
+
+  const ctx = canvas.getContext('2d');
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: prettyLabel(field),
+        data: values,
+        borderWidth: 2,
+        borderColor: makeLineGradient(ctx),
+        backgroundColor: makeFillGradient(ctx),
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      resizeDelay: 150,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { drawBorder: false }, title: { display: false } },
+        y: { grid: { drawBorder: false }, title: { display: false } }
+      }
+    }
+  });
+
+  skeleton.remove();
+
+  // Time change: refetch and update this chart only
+  select.addEventListener('change', async () => {
+    const val = select.value;
+    let url, body;
+    if (val === 'all') {
+      url  = 'https://users.iee.ihu.gr/~iee2019074/php/get_node.php';
+      body = { s_name: station, n_name: node };
+    } else {
+      url  = 'https://users.iee.ihu.gr/~iee2019074/php/get_node_by_time.php';
+      body = { s_name: station, n_name: node, hours: parseInt(val, 10) };
+    }
+
+    card.classList.add('skeleton');
+    try {
+      const j = await postSmart(url, body);
+      card.classList.remove('skeleton');
+
+      if (j.status === 'success' && Array.isArray(j.data)) {
+        const newRows = j.data;
+        chart.data.labels = newRows.map(r => r.created_at);
+        chart.data.datasets[0].data = newRows.map(r => {
+          const v = parseFloat(r[field]);
+          return Number.isFinite(v) ? v : null;
+        });
+        chart.update();
+      } else {
+        showInlineError(card, j?.message || 'No data for selected range.');
+      }
+    } catch (err) {
+      card.classList.remove('skeleton');
+      console.error(`Error fetching ${field}:`, err);
+      showInlineError(card, `Network/server error: ${String(err.message || err)}`);
+    }
+  });
+
+  // Expand action
+  if (expandBtn) {
+    expandBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      modal.open(() => {
+        const big = buildChartCard({ field, rows, station, node, large: true });
+        return { card: big.card, chart: big.chart };
+      });
+    });
+  }
+
+  return { card, chart };
+}
+
+function showInlineError(card, msg){
+  let p = card.querySelector('.chart-error');
+  if (!p) {
+    p = document.createElement('p');
+    p.className = 'chart-error';
+    p.style.color = 'var(--muted)';
+    p.style.margin = '8px 6px 0';
+    card.appendChild(p);
+  }
+  p.textContent = msg;
+}
+
+// ---------- Wind Direction card ----------
+function buildWindCard({ rows, station, node, large = false }) {
+  const card = el('div', 'chart-card wind-card');
+
+  // Header
+  const head = el('div', 'chart-head');
+  const nodeName = rows[0]?.n_name || '';
+  const title = el('div', 'chart-title', `${nodeName}: Wind Direction`);
+
+  const select = el('select', 'time-select');
+  [
+    ['All time','all'],
+    ['Last 24h','24'],
+    ['Last 48h','48'],
+    ['Last week','168'],
+    ['Last month','720'],
+    ['Last year','8760'],
+    ['Last 5 years','43800'],
+  ].forEach(([lbl, val]) => {
+    const opt = document.createElement('option');
+    opt.value = val; opt.textContent = lbl;
+    select.appendChild(opt);
+  });
+
+  let expandBtn = null;
+  if (!large) {
+    expandBtn = el('button', 'expand-btn', '⤢');
+    expandBtn.type = 'button';
+    expandBtn.title = 'Expand';
+  }
+
+  const rightBox = el('div');
+  rightBox.style.display = 'flex';
+  rightBox.style.alignItems = 'center';
+  rightBox.style.gap = '8px';
+  rightBox.appendChild(select);
+  if (expandBtn) rightBox.appendChild(expandBtn);
+
+  head.appendChild(title);
+  head.appendChild(rightBox);
+  card.appendChild(head);
+
+  window.upgradeToDropdown(select, { variant: 'time' });
+
+  // Chart area
+  const box = el('div', 'chart-box');
+  const canvas = el('canvas', 'chart-canvas');
+  const skeleton = el('div', 'chart-skeleton');
+
+  card.appendChild(skeleton);
+  box.appendChild(canvas);
+  card.appendChild(box);
+
+  // --- Build categorical series (points with y = direction label) ---
+  const Y_CATS = DIRS.map(d => d.full); // ["North", "North-East", ..., "North-West"]
+
+  function toSeries(arr) {
+    const labels = arr.map(r => r.created_at);
+    const points = arr.map((r, i) => {
+      const ts = labels[i];
+      const deg = parseWindValue(r?.windDirection);
+      if (deg == null) return { x: ts, y: null };
+      const dir = dirFromDeg(deg);
+      if (!dir) return { x: ts, y: null };
+      return { x: ts, y: dir.full, _deg: deg }; // _deg for tooltip
+    });
+    return { labels, points };
+  }
+
+  let { labels, points } = toSeries(rows);
+
+  // Build chart (dots only; no connecting line)
+  const ctx = canvas.getContext('2d');
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,                    // optional when using point.x; kept for consistency
+      datasets: [{
+        label: 'Wind Direction',
+        data: points,            // [{x: time, y: "North"}, ...]
+        parsing: true,
+        showLine: false,         // dots only
+        spanGaps: false,
+        borderWidth: 0,
+        fill: false,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        pointBackgroundColor: makeLineGradient(ctx),
+      }]
+    },
+    options: {
+      responsive: true,
+      resizeDelay: 150,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const raw = ctx.raw;
+              if (!raw || raw.y == null) return 'No data';
+              // raw._deg is attached in toSeries for the tooltip
+              return `${raw.y}${raw._deg != null ? ` (${Math.round(raw._deg)}°)` : ''}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { drawBorder: false }, title: { display: false } },
+        y: {
+          type: 'category',
+          labels: Y_CATS,        // exact categories on the y-axis
+          grid: { drawBorder: false },
+          title: { display: false }
+        }
+      }
+    }
+  });
+
+  skeleton.remove();
+
+  // Time change -> refetch + re-render series
+  select.addEventListener('change', async () => {
+    const val = select.value;
+    let url, body;
+    if (val === 'all') {
+      url  = 'https://users.iee.ihu.gr/~iee2019074/php/get_node.php';
+      body = { s_name: station, n_name: node };
+    } else {
+      url  = 'https://users.iee.ihu.gr/~iee2019074/php/get_node_by_time.php';
+      body = { s_name: station, n_name: node, hours: parseInt(val, 10) };
+    }
+
+    card.classList.add('skeleton');
+    try {
+      const j = await postSmart(url, body);
+      card.classList.remove('skeleton');
+      if (j.status === 'success' && Array.isArray(j.data)) {
+        const series = toSeries(j.data);
+        labels = series.labels;
+        points = series.points;
+
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = points;
+        chart.update();
+      } else {
+        showInlineError(card, j?.message || 'No data for selected range.');
+      }
+    } catch (err) {
+      card.classList.remove('skeleton');
+      console.error('Wind fetch error:', err);
+      showInlineError(card, `Network/server error: ${String(err.message || err)}`);
+    }
+  });
+
+  // Expand
+  if (expandBtn) {
+    expandBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      modal.open(() => {
+        const big = buildWindCard({ rows, station, node, large: true });
+        return { card: big.card, chart: big.chart };
+      });
+    });
+  }
+
+  return { card, chart };
+}
 
 
-/**
- * graphData — renders all charts
- */
+
+// ========== Render all cards ==========
 function graphData(rows, station, node) {
   const container = document.getElementById('dataSection');
   container.innerHTML = '';
@@ -396,25 +639,28 @@ function graphData(rows, station, node) {
     return;
   }
 
-  const exclude = new Set(['n_name', 'windDirection', 'created_at']);
+  // Which keys are numeric (skip windDirection)
   const keys = Object.keys(rows[0] || {});
   const numericFields = keys.filter(k => {
-    if (exclude.has(k)) return false;
+    if (k === 'n_name' || k === 'windDirection' || k === 'created_at') return false;
     return rows.some(r => Number.isFinite(parseFloat(r[k])));
   });
 
-  if (numericFields.length === 0) {
-    container.innerHTML = '<div class="empty">No numeric fields to plot.</div>';
-    return;
-  }
-
+  // Charts
   numericFields.forEach(field => {
     const { card } = buildChartCard({ field, rows, station, node, large: false });
     container.appendChild(card);
   });
+
+  // Wind Direction card (if present at all)
+  const hasWind = rows.some(r => r && r.windDirection != null && String(r.windDirection).trim() !== '');
+  if (hasWind) {
+    const { card } = buildWindCard({ rows, station, node, large: false });
+    container.appendChild(card);
+  }
 }
 
-
+// Auto-upgrade the top node select after DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   const ns = document.getElementById('nodeSelect');
   if (ns) window.upgradeToDropdown(ns, { variant: 'node' });
