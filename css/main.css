@@ -84,23 +84,8 @@ body{
     radial-gradient(1200px 700px at 10% -10%, color-mix(in oklab, var(--accent) 12%, var(--transparent)), var(--transparent) 60%),
     radial-gradient(1200px 700px at 90% 110%, color-mix(in oklab, var(--accent-2) 16%, var(--transparent)), var(--transparent) 60%),
     linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+    background-attachment: fixed, fixed, fixed;
   padding: clamp(16px, 3vw, 32px);
-}
-
-/* Subtle floating particles (very light) */
-@keyframes particleFloat {
-  from { transform: translateY(0px) }
-  to   { transform: translateY(-10px) }
-}
-body::before, body::after{
-  content:"";
-  position:fixed; inset:0; pointer-events:none;
-  background:
-    radial-gradient(1px 1px at 20% 30%, var(--white-12), var(--transparent) 40%),
-    radial-gradient(1.2px 1.2px at 80% 70%, var(--white-10), var(--transparent) 40%),
-    radial-gradient(0.8px 0.8px at 60% 20%, var(--white-10), var(--transparent) 40%);
-  mix-blend-mode: screen; opacity:.35;
-  animation: particleFloat 6s ease-in-out alternate infinite;
 }
 
 /* 3) Container (glass card) */
@@ -292,7 +277,7 @@ input:focus-visible{
 }
 .controls label{
   color: var(--muted);
-  font-size: .95rem;
+  font-size: 1.25rem;
 }
 
 /* Select (same vibe as your inputs) */
@@ -486,6 +471,7 @@ input:focus-visible{
   box-shadow: var(--shadow-sm) inset;
   transition: transform var(--transition), background var(--transition), border-color var(--transition), box-shadow var(--transition);
   margin-left: 6px;
+  cursor: pointer;
 }
 .expand-btn:hover{
   background: var(--white-10);

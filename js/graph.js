@@ -1,6 +1,3 @@
-// graph.js
-
-
 // Small helper to create elements
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -31,6 +28,9 @@ function el(tag, className, text) {
   Chart.defaults.plugins.tooltip.bodyColor = '#fff';
   Chart.defaults.plugins.tooltip.borderWidth = 1;
   Chart.defaults.plugins.tooltip.borderColor = 'rgba(255,255,255,.12)';
+  Chart.defaults.plugins.tooltip.titleFont = { size: 16, weight: '600' }; // tooltip title
+  Chart.defaults.plugins.tooltip.bodyFont  = { size: 16 };                // tooltip body
+  Chart.defaults.plugins.tooltip.footerFont = { size: 12 };               // (optional)
   Chart.defaults.elements.point.radius = 0;
   Chart.defaults.elements.line.tension = 0.35;
 
@@ -56,6 +56,14 @@ function el(tag, className, text) {
   Chart.overrides.line = Chart.overrides.line || {};
   Chart.overrides.line.scales = Chart.overrides.line.scales || {};
   ['x','y'].forEach(k => Chart.overrides.line.scales[k] = axisCfg);
+
+  Chart.overrides.line.scales.y = {
+    ...Chart.overrides.line.scales.y,
+    ticks: {
+      ...(Chart.overrides.line.scales.y?.ticks || {}),
+      font: { size: 16 }
+    }
+  };
 })();
 
 // --- shared POST helper (JSON first, then form-encoded fallback) ---
@@ -241,6 +249,7 @@ const FRIENDLY_LABELS = {
   airHumid: 'Air Humidity',
   pressure: 'Air Pressure',
   airPressure: 'Air Pressure',
+  airPress: 'Air Pressure',
   temp: 'Temperature',
   humid: 'Humidity',
   co2: 'CO₂',
@@ -250,6 +259,21 @@ const FRIENDLY_LABELS = {
   windSpeed: 'Wind Speed',
   windGust: 'Wind Gust',
 };
+
+// === Units (only the ones you specified) ===
+const UNITS = {
+  soilTemp: '°C',
+  soilMoist: '%',
+  airTemp: '°C',
+  airHumid: '%',
+  pressure: 'hPa',
+  airPressure: 'hPa',
+  airPress: 'hPa',
+  windSpeed: 'km/h',
+  windGust: 'km/h',
+};
+
+function unitForKey(key){ return UNITS[key] || null; }
 
 function prettyLabel(key){
   if (FRIENDLY_LABELS[key]) return FRIENDLY_LABELS[key];
@@ -312,7 +336,8 @@ function buildChartCard({ field, rows, station, node, large = false }) {
   // Header
   const head = el('div', 'chart-head');
   const nodeName = rows[0]?.n_name || '';
-  const title = el('div', 'chart-title', `${nodeName}: ${prettyLabel(field)}`);
+  const title = el('div', 'chart-title', `${prettyLabel(field)} (${unitForKey(field) || 'N/A'})`);
+  title.style.fontSize = 'clamp(16px, 2.2vw, 22px)';
 
   const select = el('select', 'time-select');
   [
@@ -367,13 +392,16 @@ function buildChartCard({ field, rows, station, node, large = false }) {
     return Number.isFinite(v) ? v : null;
   });
 
+  const unit = unitForKey(field);
+  const labelWithUnit = unit ? `${prettyLabel(field)} (${unit})` : prettyLabel(field);
+
   const ctx = canvas.getContext('2d');
   const chart = new Chart(ctx, {
     type: 'line',
     data: {
       labels,
       datasets: [{
-        label: prettyLabel(field),
+        label: labelWithUnit,
         data: values,
         borderWidth: 2,
         borderColor: makeLineGradient(ctx),
@@ -386,10 +414,30 @@ function buildChartCard({ field, rows, station, node, large = false }) {
       resizeDelay: 150,
       maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: { display: false },
+        title: { font: { size: 30 }, display: true },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const val = ctx.parsed.y;
+              if (val == null || !Number.isFinite(val)) return 'No data';
+              // Soil Moisture special meanings
+              if (field === 'soilMoist') {
+                if (val === -10) return 'Sensor not placed properly in soil';
+                if (val === 100) return 'Soil too wet to calculate';
+              }
+              return unit ? `${val} ${unit}` : String(val);
+            }
+          }
+        }
+      },
       scales: {
         x: { grid: { drawBorder: false }, title: { display: false } },
-        y: { grid: { drawBorder: false }, title: { display: false } }
+        y: { 
+          grid: { drawBorder: false }, 
+          title: { display: false, text: '' }
+        }
       }
     }
   });
@@ -464,7 +512,8 @@ function buildWindCard({ rows, station, node, large = false }) {
   // Header
   const head = el('div', 'chart-head');
   const nodeName = rows[0]?.n_name || '';
-  const title = el('div', 'chart-title', `${nodeName}: Wind Direction`);
+  const title = el('div', 'chart-title', `Wind Direction`);
+  title.style.fontSize = 'clamp(16px, 2.2vw, 22px)';
 
   const select = el('select', 'time-select');
   [
@@ -559,7 +608,6 @@ function buildWindCard({ rows, station, node, large = false }) {
             label: (ctx) => {
               const raw = ctx.raw;
               if (!raw || raw.y == null) return 'No data';
-              // raw._deg is attached in toSeries for the tooltip
               return `${raw.y}${raw._deg != null ? ` (${Math.round(raw._deg)}°)` : ''}`;
             }
           }
