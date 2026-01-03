@@ -60,6 +60,7 @@ try {
     $stmt = mysqli_prepare($dbcnx, "SELECT s_id FROM stations WHERE s_name = ?");
     mysqli_stmt_bind_param($stmt, 's', $s_name);
     mysqli_stmt_execute($stmt);
+    $s_id = null;
     mysqli_stmt_bind_result($stmt, $s_id);
     if (!mysqli_stmt_fetch($stmt)) {
         mysqli_stmt_close($stmt);
@@ -71,9 +72,13 @@ try {
         exit;
     }
     mysqli_stmt_close($stmt);
+    $s_id = (string)$s_id;
 
     // Step 4: Sanitize table name
     $table = preg_replace('/[^a-zA-Z0-9_]/', '_', $s_id);
+    if ($table === null) {
+        throw new Exception("Failed to sanitize table name");
+    }
 
     // Step 5: Ensure the station’s data table exists
     $check = mysqli_query($dbcnx, "SHOW TABLES LIKE '{$table}'");
