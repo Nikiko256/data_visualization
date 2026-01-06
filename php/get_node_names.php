@@ -71,7 +71,7 @@ try {
         echo json_encode(["status" => "error", "message" => "Data table for station '{$s_name}' does not exist"]);
         exit;
     }
-
+    
     // Step 4: Fetch distinct node names
     $query = "SELECT DISTINCT n_name FROM `{$table}` ORDER BY n_name ASC";
     $result = mysqli_query($dbcnx, $query);

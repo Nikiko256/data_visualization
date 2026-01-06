@@ -43,6 +43,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const filtered = stations.filter(name => name.toLowerCase().includes(query));
         renderList(filtered);
       });
+
+      /*document.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('themeToggle');
+        if (btn) {
+        btn.addEventListener('click', () => {
+        const root = document.documentElement;
+        const next = root.dataset.theme === 'light' ? 'dark' : 'light';
+        root.dataset.theme = next;
+        localStorage.setItem('theme', next);
+      });
+        }
+      
+      }); */
+
     });
 
 
