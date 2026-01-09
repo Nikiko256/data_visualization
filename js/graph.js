@@ -10,6 +10,50 @@ function el(tag, className, text) {
 
 // ===============================
 // Theme bridge for Chart.js
+
+// keep a registry of charts
+window.__charts = window.__charts || new Set();
+
+window.registerChart = function registerChart(chart) {
+  window.__charts.add(chart);
+  return chart;
+};
+
+window.rethemeAllCharts = function rethemeAllCharts() {
+  const r = getComputedStyle(document.documentElement);
+  const ticks = r.getPropertyValue('--chart-ticks').trim() || r.getPropertyValue('--text').trim();
+  const grid  = r.getPropertyValue('--chart-grid').trim() || 'rgba(0,0,0,0.12)';
+
+  window.__charts.forEach((ch) => {
+    if (!ch || ch._destroyed) return;
+
+    // update axis colors per chart
+    if (ch.options?.scales) {
+      Object.values(ch.options.scales).forEach((s) => {
+        if (!s) return;
+        s.ticks = s.ticks || {};
+        s.grid  = s.grid  || {};
+        s.ticks.color = ticks;
+        s.grid.color = grid;
+        s.grid.tickColor = grid;
+        s.grid.borderColor = grid;
+      });
+    }
+
+    // refresh gradients if dataset uses them
+    const ctx = ch.ctx;
+    if (ctx && ch.data?.datasets?.length) {
+      ch.data.datasets.forEach(ds => {
+        if (typeof window.makeLineGradient === 'function') ds.borderColor = window.makeLineGradient(ctx);
+        if (typeof window.makeFillGradient === 'function') ds.backgroundColor = window.makeFillGradient(ctx);
+        if (ds.pointBackgroundColor) ds.pointBackgroundColor = window.makeLineGradient(ctx);
+      });
+    }
+
+    ch.update('none');
+  });
+};
+
 // ===============================
 (function(){
   const r = getComputedStyle(document.documentElement);

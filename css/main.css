@@ -64,8 +64,8 @@ html[data-theme="light"]{
   --bg-2:#eef2f8;
   --panel-bg: rgba(255,255,255,0.92);
   --panel-bg-98: rgba(255,255,255,0.98);
-  --text:#0b1220;
-  --muted:#4a5565;
+  --text:#172034;
+  --muted:#0e141d;
 
   --white-00: rgba(0,0,0,0);
   --white-04: rgba(0,0,0,.04);
@@ -95,7 +95,7 @@ html[data-theme="light"]{
   --panel-bg: rgba(255,255,255,0.92);
   --panel-bg-98: rgba(255,255,255,0.98);
   --text:#0b1220;
-  --muted:#4a5565;
+  --muted:#060a10;
 
   /* remap your "white alpha" tokens for borders/surfaces */
   --white-00: rgba(0,0,0,0);
@@ -112,7 +112,7 @@ html[data-theme="light"]{
   --white-30: rgba(0,0,0,.30);
   --white-35: rgba(0,0,0,.35);
 
-  --card: rgba(255,255,255,0.75);
+  --card: rgba(250, 251, 254, 0.75);
   --shadow-lg: 0 10px 30px rgba(17,24,39,.10);
   --shadow-sm: 0 6px 16px rgba(17,24,39,.08);
 }
@@ -135,7 +135,7 @@ html[data-theme="light"]{
   :root:not([data-theme]){
     --bg: #f5f7fa;
     --bg-2:#eef2f8;
-    --card: rgba(255,255,255,0.7);
+    --card: rgba(255, 255, 255, 0.7);
     --text:#1b2333;
     --muted:#5a6b8a;
     --shadow-lg: 0 10px 30px var(--slate-900-10);
@@ -342,7 +342,6 @@ input:focus-visible{
   from{ transform: translateX(-100%) }
   to{ transform: translateX(100%) }
 }
-
 
 
 
