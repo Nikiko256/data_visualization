@@ -44,18 +44,18 @@ document.addEventListener('DOMContentLoaded', () => {
         renderList(filtered);
       });
 
-      document.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('themeToggle');
-    if (btn) {
-      btn.addEventListener('click', () => {
+      /*document.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('themeToggle');
+        if (btn) {
+        btn.addEventListener('click', () => {
         const root = document.documentElement;
         const next = root.dataset.theme === 'light' ? 'dark' : 'light';
         root.dataset.theme = next;
         localStorage.setItem('theme', next);
       });
-    }
-      // ... your existing code ...
-      });
+        }
+      
+      }); */
 
     });
 

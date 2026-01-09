@@ -10,8 +10,9 @@
 
   function apply(theme) {
     document.documentElement.dataset.theme = theme;
-    localStorage.setItem(key, theme);
+    localStorage.setItem("theme", theme);
 
+    if (window.rethemeAllCharts) window.rethemeAllCharts();
     // update button icon (sun when light, moon when dark)
     const btn = document.getElementById("themeToggle");
     if (btn) btn.textContent = theme === "light" ? "🌙" : "☀️";

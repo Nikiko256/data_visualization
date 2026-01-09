@@ -6,6 +6,23 @@ function el(tag, className, text) {
   return node;
 }
 
+function cssVar(name, fallback = '') {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return v || fallback;
+}
+
+function tickColor() {
+  return cssVar('--chart-ticks', cssVar('--text', '#111'));
+}
+
+function gridColor() {
+  return cssVar('--chart-grid', 'rgba(0,0,0,0.12)');
+}
+
+// keep references to charts so we can refresh them on theme toggle
+window.__charts = window.__charts || new Set();
+window.registerChart = (ch) => (window.__charts.add(ch), ch);
+window.rethemeAllCharts = () => window.__charts.forEach(ch => ch.update('none'));
 
 
 // ===============================
@@ -57,9 +74,14 @@ window.rethemeAllCharts = function rethemeAllCharts() {
 // ===============================
 (function(){
   const r = getComputedStyle(document.documentElement);
-  const text = r.getPropertyValue('--text').trim() || '#e8ecf3';
+  
+  /*const text = r.getPropertyValue('--text').trim() || '#e8ecf3';
   const muted = r.getPropertyValue('--muted').trim() || '#b6c2e1';
-  const grid = 'rgba(255,255,255,0.12)';
+  const grid = 'rgba(255,255,255,0.12)';*/
+  const text  = r.getPropertyValue('--text').trim() || '#0b1220';
+  const ticks = r.getPropertyValue('--chart-ticks').trim() || text;
+  const grid  = r.getPropertyValue('--chart-grid').trim() || 'rgba(0,0,0,0.12)';
+
   const accent = r.getPropertyValue('--accent').trim() || '#6ee7f9';
   const accent2 = r.getPropertyValue('--accent-2').trim() || '#a78bfa';
 
@@ -93,10 +115,16 @@ window.rethemeAllCharts = function rethemeAllCharts() {
   };
 
   // Axes
-  const axisCfg = {
+  /*const axisCfg = {
     grid: { color: grid, tickColor: grid, borderColor: grid },
     ticks: { color: muted }
+  };*/
+  const axisCfg = {
+    grid: { color: grid, tickColor: grid, borderColor: grid },
+    ticks: { color: ticks }
   };
+  
+
   Chart.overrides.line = Chart.overrides.line || {};
   Chart.overrides.line.scales = Chart.overrides.line.scales || {};
   ['x','y'].forEach(k => Chart.overrides.line.scales[k] = axisCfg);
@@ -373,6 +401,44 @@ function dirFromDeg(deg){
   return DIRS[idx];
 }
 
+// ===== Chart theme re-apply (call after theme toggle) =====
+function readChartTheme() {
+  const r = getComputedStyle(document.documentElement);
+  const text  = r.getPropertyValue('--text').trim() || '#111';
+  const ticks = r.getPropertyValue('--chart-ticks').trim() || text;
+  const grid  = r.getPropertyValue('--chart-grid').trim() || 'rgba(0,0,0,0.12)';
+  return { text, ticks, grid };
+}
+
+window.__charts = window.__charts || new Set();
+window.registerChart = (ch) => (window.__charts.add(ch), ch);
+
+window.rethemeAllCharts = function () {
+  const { text, ticks, grid } = readChartTheme();
+
+  // defaults (optional but good)
+  Chart.defaults.color = text;
+  Chart.defaults.plugins.legend.labels.color = text;
+
+  // update existing charts
+  window.__charts.forEach((ch) => {
+    const sx = ch.options?.scales?.x;
+    const sy = ch.options?.scales?.y;
+
+    if (sx) {
+      sx.ticks = { ...(sx.ticks || {}), color: ticks };
+      sx.grid  = { ...(sx.grid  || {}), color: grid };
+    }
+    if (sy) {
+      sy.ticks = { ...(sy.ticks || {}), color: ticks };
+      sy.grid  = { ...(sy.grid  || {}), color: grid };
+    }
+
+    ch.update('none');
+  });
+};
+
+
 // ---------- Reusable CHART card ----------
 function buildChartCard({ field, rows, station, node, large = false }) {
   const card = el('div', 'chart-card');
@@ -440,7 +506,7 @@ function buildChartCard({ field, rows, station, node, large = false }) {
   const labelWithUnit = unit ? `${prettyLabel(field)} (${unit})` : prettyLabel(field);
 
   const ctx = canvas.getContext('2d');
-  const chart = new Chart(ctx, {
+  const chart = window.registerChart(new Chart(ctx, {
     type: 'line',
     data: {
       labels,
@@ -476,15 +542,23 @@ function buildChartCard({ field, rows, station, node, large = false }) {
           }
         }
       },
-      scales: {
-        x: { grid: { drawBorder: false }, title: { display: false } },
-        y: { 
-          grid: { drawBorder: false }, 
-          title: { display: false, text: '' }
-        }
+    scales: {
+      x: {
+        grid: { drawBorder: false, color: () => gridColor() },
+        ticks: { color: () => tickColor() },
+        title: { display: false }
+      },
+      y: {
+        grid: { drawBorder: false, color: () => gridColor() },
+        ticks: { color: () => tickColor(), font: { size: 16 } },
+        title: { display: false, text: '' }
       }
     }
-  });
+    }
+  }));
+
+  window.registerChart(chart);
+
 
   skeleton.remove();
 
@@ -623,7 +697,7 @@ function buildWindCard({ rows, station, node, large = false }) {
 
   // Build chart (dots only; no connecting line)
   const ctx = canvas.getContext('2d');
-  const chart = new Chart(ctx, {
+  const chart = window.registerChart (new Chart(ctx, {
     type: 'line',
     data: {
       labels,                    // optional when using point.x; kept for consistency
@@ -658,16 +732,23 @@ function buildWindCard({ rows, station, node, large = false }) {
         }
       },
       scales: {
-        x: { grid: { drawBorder: false }, title: { display: false } },
-        y: {
-          type: 'category',
-          labels: Y_CATS,        // exact categories on the y-axis
-          grid: { drawBorder: false },
+        x: {
+          grid: { drawBorder: false, color: () => gridColor() },
+          ticks: { color: () => tickColor() },
           title: { display: false }
+        },
+        y: {
+          grid: { drawBorder: false, color: () => gridColor() },
+          ticks: { color: () => tickColor(), font: { size: 16 } },
+          title: { display: false, text: '' }
         }
       }
+
     }
-  });
+  }));
+
+  window.registerChart(chart);
+
 
   skeleton.remove();
 
