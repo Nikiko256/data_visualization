@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', () => {
       const listEl = document.getElementById('stationsList');
       const searchInput = document.getElementById('searchInput');
@@ -67,4 +68,3 @@ document.addEventListener('DOMContentLoaded', () => {
   t.style.setProperty('--mx', (e.clientX - r.left) + 'px');
   t.style.setProperty('--my', (e.clientY - r.top) + 'px');
 });
-
