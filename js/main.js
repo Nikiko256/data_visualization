@@ -59,11 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     });
 
-
-
-
-
-
     // enhance the hover glow effect
     document.addEventListener('pointermove', e => {
   const t = e.target.closest('.station-item');
@@ -72,3 +67,4 @@ document.addEventListener('DOMContentLoaded', () => {
   t.style.setProperty('--mx', (e.clientX - r.left) + 'px');
   t.style.setProperty('--my', (e.clientY - r.top) + 'px');
 });
+

@@ -1,3 +1,4 @@
+
 /* =======================
    Stations — UI/UX Glow-up
    ======================= */
@@ -423,25 +424,7 @@ input:focus-visible{
 }
 
 /* Select (same vibe as your inputs) */
-#nodeSelect{
-  appearance: none;
-  -webkit-appearance: none;
-  border: 1px solid var(--white-18);
-  background:
-    var(--white-06)
-    linear-gradient(180deg, var(--transparent) 60%, var(--black-02)),
-    /* caret */
-    linear-gradient(90deg, var(--transparent) calc(100% - 34px), var(--white-06) 0);
-  color: var(--text);
-  padding: 12px 40px 12px 12px;
-  border-radius: 12px;
-  outline: none;
-  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
-  box-shadow: var(--shadow-sm) inset;
-  cursor: pointer;
-  min-width: 140px;
-  position: relative;
-}
+
 #nodeSelect:focus{
   border-color: color-mix(in oklab, var(--accent) 55%, var(--white) 0%);
   box-shadow: var(--ring);
@@ -841,4 +824,5 @@ header{
   top: 50%;
   transform: translateY(-50%);
   padding: 8px 10px;
+
 }

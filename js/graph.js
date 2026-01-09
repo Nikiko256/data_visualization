@@ -1,3 +1,4 @@
+
 // Small helper to create elements
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -838,3 +839,4 @@ document.addEventListener('DOMContentLoaded', () => {
   const ns = document.getElementById('nodeSelect');
   if (ns) window.upgradeToDropdown(ns, { variant: 'node' });
 });
+
