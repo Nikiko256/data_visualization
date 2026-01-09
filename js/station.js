@@ -87,12 +87,3 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   });
 });
-
-
-
-
-
-
-
-
-
