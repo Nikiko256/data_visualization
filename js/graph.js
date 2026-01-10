@@ -1,4 +1,3 @@
-
 // Small helper to create elements
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -84,7 +83,7 @@ window.rethemeAllCharts = function rethemeAllCharts() {
   const grid  = r.getPropertyValue('--chart-grid').trim() || 'rgba(0,0,0,0.12)';
 
   const accent = r.getPropertyValue('--accent').trim() || '#6ee7f9';
-  const accent2 = r.getPropertyValue('--accent-2').trim() || '#a78bfa';
+  const accent2 = r.getPropertyValue('--accent-2').trim() || '#460fec';
 
   Chart.defaults.color = text;
   Chart.defaults.font.family = 'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial';
@@ -734,17 +733,20 @@ function buildWindCard({ rows, station, node, large = false }) {
       },
       scales: {
         x: {
+          type: 'category',
           grid: { drawBorder: false, color: () => gridColor() },
           ticks: { color: () => tickColor() },
           title: { display: false }
         },
         y: {
+          type: 'category',
+          labels: Y_CATS,          // <- IMPORTANT: fixed order of directions
+          offset: true,
           grid: { drawBorder: false, color: () => gridColor() },
           ticks: { color: () => tickColor(), font: { size: 16 } },
           title: { display: false, text: '' }
         }
       }
-
     }
   }));
 
