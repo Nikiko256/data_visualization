@@ -841,4 +841,3 @@ document.addEventListener('DOMContentLoaded', () => {
   const ns = document.getElementById('nodeSelect');
   if (ns) window.upgradeToDropdown(ns, { variant: 'node' });
 });
-
