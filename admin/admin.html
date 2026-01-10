@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Admin Panel</title>
+
+  <!-- same no-flash theme init -->
+  <script>
+    (function () {
+      const key = "theme";
+      const saved = localStorage.getItem(key);
+      const prefersLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+      const theme = saved || (prefersLight ? "light" : "dark");
+      document.documentElement.dataset.theme = theme;
+    })();
+  </script>
+
+  <!-- reuse your existing UI -->
+  <link rel="stylesheet" href="../css/main.css" />
+  <!-- admin additions -->
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+
+<body>
+  <div class="container">
+    <header class="topbar">
+      <div></div>
+      <h1>Admin Control Panel</h1>
+      <button class="btn" id="themeToggle" type="button" aria-label="Toggle theme">☀️</button>
+    </header>
+
+    <!-- Top action bar -->
+    <section class="admin-bar">
+      <div class="admin-tabs" role="tablist" aria-label="Admin sections">
+        <button class="admin-tab is-active" data-tab="stations" role="tab" aria-selected="true">Stations</button>
+        <button class="admin-tab" data-tab="nodes" role="tab" aria-selected="false">Nodes</button>
+      </div>
+
+      <div class="admin-bar-right">
+        <button class="btn btn-ghost" id="refreshAll" type="button">Refresh</button>
+      </div>
+    </section>
+
+    <!-- Toast -->
+    <div id="toast" class="toast" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- STATIONS -->
+    <section class="admin-section is-active" id="tab-stations" data-panel="stations" role="tabpanel">
+      <div class="admin-grid">
+        <!-- Create -->
+        <div class="admin-card">
+          <div class="admin-card-head">
+            <div class="admin-card-title">Create Station</div>
+            <div class="admin-card-sub">Add a station to the public list</div>
+          </div>
+
+          <div class="admin-form">
+            <label class="admin-label" for="s_id">Station ID (s_id)</label>
+            <input class="admin-input" id="s_id" placeholder="station_001" />
+
+            <label class="admin-label" for="s_name">Station Name (s_name)</label>
+            <input class="admin-input" id="s_name" placeholder="Thessaloniki Center" />
+
+            <div class="admin-actions">
+              <button class="btn" id="createStation" type="button">Create</button>
+              <button class="btn btn-ghost" id="clearStationForm" type="button">Clear</button>
+            </div>
+
+            <p class="admin-hint">
+              Tip: keep <code>s_id</code> stable. Public UI uses <code>s_name</code>.
+            </p>
+          </div>
+        </div>
+
+        <!-- List -->
+        <div class="admin-card">
+          <div class="admin-card-head">
+            <div class="admin-card-title">Stations List</div>
+            <div class="admin-card-sub">Edit station name or delete station</div>
+          </div>
+
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th style="width: 28%">s_id</th>
+                  <th>s_name</th>
+                  <th style="width: 28%">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="stationsTbody">
+                <!-- injected -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NODES -->
+    <section class="admin-section" id="tab-nodes" data-panel="nodes" role="tabpanel">
+      <div class="admin-grid">
+        <!-- Create -->
+        <div class="admin-card">
+          <div class="admin-card-head">
+            <div class="admin-card-title">Create Node</div>
+            <div class="admin-card-sub">Map nodes to stations (metadata only)</div>
+          </div>
+
+          <div class="admin-form">
+            <label class="admin-label" for="nodeStationSelect">Station (s_id)</label>
+            <select class="admin-input" id="nodeStationSelect">
+              <option value="">-- choose station --</option>
+            </select>
+
+            <label class="admin-label" for="n_name">Node name (n_name)</label>
+            <input class="admin-input" id="n_name" placeholder="node1" />
+
+            <label class="admin-label" for="display_name">Display name (optional)</label>
+            <input class="admin-input" id="display_name" placeholder="Garden sensor" />
+
+            <div class="admin-actions">
+              <button class="btn" id="createNode" type="button">Create</button>
+              <button class="btn btn-ghost" id="clearNodeForm" type="button">Clear</button>
+            </div>
+
+            <p class="admin-hint">
+              This does <b>not</b> edit measurements. It’s only metadata for what nodes exist.
+            </p>
+          </div>
+        </div>
+
+        <!-- List -->
+        <div class="admin-card">
+          <div class="admin-card-head">
+            <div class="admin-card-title">Nodes List</div>
+            <div class="admin-card-sub">Rename (display), enable/disable, delete</div>
+          </div>
+
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th style="width: 18%">s_id</th>
+                  <th style="width: 18%">n_name</th>
+                  <th>display_name</th>
+                  <th style="width: 10%">active</th>
+                  <th style="width: 26%">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="nodesTbody">
+                <!-- injected -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- reuse your theme -->
+  <script src="../js/theme.js" defer></script>
+  <!-- admin logic -->
+  <script src="js/admin.js" defer></script>
+</body>
+</html>
