@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Admin Panel</title>
+
+  <script>
+    (function () {
+      const key = "theme";
+      const saved = localStorage.getItem(key);
+      const prefersLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+      const theme = saved || (prefersLight ? "light" : "dark");
+      document.documentElement.dataset.theme = theme;
+    })();
+  </script>
+
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+
+<body>
+  <div class="admin-shell">
+    <!-- SIDEBAR -->
+    <aside class="admin-side">
+      <div class="admin-brand">
+        <div class="admin-brand__title">Admin</div>
+        <div class="admin-brand__sub">Stations Control</div>
+      </div>
+
+      <nav class="admin-nav" aria-label="Admin navigation">
+        <button class="admin-nav__item is-active" data-tab="stations" type="button">
+          <span class="admin-nav__dot"></span>
+          Stations
+        </button>
+        <button class="admin-nav__item" data-tab="nodes" type="button">
+          <span class="admin-nav__dot"></span>
+          Nodes
+        </button>
+      </nav>
+
+      <div class="admin-side__footer">
+        <button class="btn" id="themeToggle" type="button" aria-label="Toggle theme">☀️</button>
+        <div class="admin-side__hint">Basic Auth protected</div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="admin-main">
+      <!-- Topbar -->
+      <header class="admin-top">
+        <div>
+          <h1 class="admin-h1" id="pageTitle">Stations</h1>
+          <p class="admin-subtitle" id="pageSubtitle">Create, rename, delete stations.</p>
+        </div>
+
+        <div class="admin-top__actions">
+          <button class="btn btn-ghost" id="refreshAll" type="button">Refresh</button>
+        </div>
+      </header>
+
+      <!-- Toast -->
+      <div id="toast" class="toast" aria-live="polite" aria-atomic="true"></div>
+
+      <!-- STATIONS PANEL -->
+      <section class="admin-panel is-active" data-panel="stations">
+        <div class="admin-two">
+          <!-- Form -->
+          <section class="admin-card">
+            <div class="admin-card-head">
+              <div class="admin-card-title">Create Station</div>
+              <div class="admin-card-sub">Add station to public listing</div>
+            </div>
+
+            <div class="admin-form">
+              <label class="admin-label" for="s_id">Station ID (s_id)</label>
+              <input class="admin-input" id="s_id" placeholder="station_001" />
+
+              <label class="admin-label" for="s_name">Station Name (s_name)</label>
+              <input class="admin-input" id="s_name" placeholder="Thessaloniki Center" />
+
+              <div class="admin-actions">
+                <button class="btn" id="createStation" type="button">Create</button>
+                <button class="btn btn-ghost" id="clearStationForm" type="button">Clear</button>
+              </div>
+
+              <p class="admin-hint">
+                <b>s_id</b> is your stable key. Public UI shows <b>s_name</b>.
+              </p>
+            </div>
+          </section>
+
+          <!-- Table -->
+          <section class="admin-card">
+            <div class="admin-card-head">
+              <div class="admin-card-title">Stations List</div>
+              <div class="admin-card-sub">Edit station name or delete</div>
+            </div>
+
+            <div class="admin-table-toolbar">
+              <input class="admin-input admin-input--sm" id="stationsSearch" placeholder="Search stations..." />
+            </div>
+
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th style="width: 26%">s_id</th>
+                    <th>s_name</th>
+                    <th style="width: 28%">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="stationsTbody"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <!-- NODES PANEL -->
+      <section class="admin-panel" data-panel="nodes">
+        <div class="admin-two">
+          <!-- Form -->
+          <section class="admin-card">
+            <div class="admin-card-head">
+              <div class="admin-card-titl
