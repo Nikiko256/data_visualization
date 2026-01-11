@@ -29,20 +29,36 @@ async function postJSON(url, payload) {
 
 // ---------------- Tabs ----------------
 function setupTabs() {
-  const tabs = document.querySelectorAll(".admin-tab");
-  const panels = document.querySelectorAll(".admin-section");
+  const navBtns = document.querySelectorAll(".admin-nav__item");
+  const panels = document.querySelectorAll(".admin-panel");
 
-  tabs.forEach(btn => {
+  const pageTitle = document.getElementById("pageTitle");
+  const pageSubtitle = document.getElementById("pageSubtitle");
+
+  const meta = {
+    stations: {
+      title: "Stations",
+      sub: "Create, rename, delete stations."
+    },
+    nodes: {
+      title: "Nodes",
+      sub: "Manage node metadata per station."
+    }
+  };
+
+  navBtns.forEach(btn => {
     btn.addEventListener("click", () => {
       const key = btn.dataset.tab;
 
-      tabs.forEach(t => t.classList.toggle("is-active", t === btn));
-      tabs.forEach(t => t.setAttribute("aria-selected", t === btn ? "true" : "false"));
-
+      navBtns.forEach(b => b.classList.toggle("is-active", b === btn));
       panels.forEach(p => p.classList.toggle("is-active", p.dataset.panel === key));
+
+      pageTitle.textContent = meta[key].title;
+      pageSubtitle.textContent = meta[key].sub;
     });
   });
 }
+
 
 // ---------------- Stations ----------------
 const stationsTbody = document.getElementById("stationsTbody");
@@ -244,6 +260,46 @@ function renderNodes(rows) {
     });
   });
 }
+
+let __stationsCache = [];
+let __nodesCache = [];
+
+function wireFilters() {
+  // stations search
+  const stationsSearch = document.getElementById("stationsSearch");
+  if (stationsSearch) {
+    stationsSearch.addEventListener("input", () => {
+      const q = stationsSearch.value.trim().toLowerCase();
+      const filtered = __stationsCache.filter(s =>
+        (s.s_id || "").toLowerCase().includes(q) ||
+        (s.s_name || "").toLowerCase().includes(q)
+      );
+      renderStations(filtered);
+    });
+  }
+
+  // nodes filters
+  const nodesSearch = document.getElementById("nodesSearch");
+  const nodesStationFilter = document.getElementById("nodesStationFilter");
+
+  function applyNodeFilters() {
+    const q = (nodesSearch?.value || "").trim().toLowerCase();
+    const sid = (nodesStationFilter?.value || "").trim();
+
+    const filtered = __nodesCache.filter(n => {
+      const okStation = !sid || n.s_id === sid;
+      const blob = `${n.s_id} ${n.n_name} ${n.display_name || ""}`.toLowerCase();
+      const okQuery = !q || blob.includes(q);
+      return okStation && okQuery;
+    });
+
+    renderNodes(filtered);
+  }
+
+  if (nodesSearch) nodesSearch.addEventListener("input", applyNodeFilters);
+  if (nodesStationFilter) nodesStationFilter.addEventListener("change", applyNodeFilters);
+}
+
 
 function setupNodeCreate() {
   const n_name = document.getElementById("n_name");
