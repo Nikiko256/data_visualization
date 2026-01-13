@@ -1,11 +1,10 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Panel</title>
 
-  <!-- same no-flash theme init -->
   <script>
     (function () {
       const key = "theme";
@@ -16,10 +15,8 @@
     })();
   </script>
 
-  <!-- reuse your existing UI -->
-  <link rel="stylesheet" href="../css/main.css" />
-  <!-- admin additions -->
-  <link rel="stylesheet" href="css/admin.css" />
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="admin.css">
 </head>
 
 <body>
@@ -30,138 +27,119 @@
       <button class="btn" id="themeToggle" type="button" aria-label="Toggle theme">☀️</button>
     </header>
 
-    <!-- Top action bar -->
-    <section class="admin-bar">
-      <div class="admin-tabs" role="tablist" aria-label="Admin sections">
-        <button class="admin-tab is-active" data-tab="stations" role="tab" aria-selected="true">Stations</button>
-        <button class="admin-tab" data-tab="nodes" role="tab" aria-selected="false">Nodes</button>
-      </div>
-
-      <div class="admin-bar-right">
-        <button class="btn btn-ghost" id="refreshAll" type="button">Refresh</button>
+    <!-- Tabs -->
+    <section class="controls" style="grid-template-columns: 1fr;">
+      <div class="admin-tabs">
+        <button class="btn" id="tabStations" type="button">Stations</button>
+        <button class="btn" id="tabNodes" type="button">Nodes</button>
       </div>
     </section>
 
-    <!-- Toast -->
-    <div id="toast" class="toast" aria-live="polite" aria-atomic="true"></div>
-
-    <!-- STATIONS -->
-    <section class="admin-section is-active" id="tab-stations" data-panel="stations" role="tabpanel">
-      <div class="admin-grid">
-        <!-- Create -->
-        <div class="admin-card">
-          <div class="admin-card-head">
-            <div class="admin-card-title">Create Station</div>
-            <div class="admin-card-sub">Add a station to the public list</div>
-          </div>
-
-          <div class="admin-form">
-            <label class="admin-label" for="s_id">Station ID (s_id)</label>
-            <input class="admin-input" id="s_id" placeholder="station_001" />
-
-            <label class="admin-label" for="s_name">Station Name (s_name)</label>
-            <input class="admin-input" id="s_name" placeholder="Thessaloniki Center" />
-
-            <div class="admin-actions">
-              <button class="btn" id="createStation" type="button">Create</button>
-              <button class="btn btn-ghost" id="clearStationForm" type="button">Clear</button>
-            </div>
-
-            <p class="admin-hint">
-              Tip: keep <code>s_id</code> stable. Public UI uses <code>s_name</code>.
-            </p>
-          </div>
+    <!-- STATIONS PANEL -->
+    <section id="panelStations" class="admin-panel" style="display:none;">
+      <div class="chart-card mb-16">
+        <div class="chart-head">
+          <div class="chart-title">Create station</div>
         </div>
 
-        <!-- List -->
-        <div class="admin-card">
-          <div class="admin-card-head">
-            <div class="admin-card-title">Stations List</div>
-            <div class="admin-card-sub">Edit station name or delete station</div>
+        <div class="admin-form admin-form--stations">
+          <div>
+            <label class="admin-label" for="stCreateId">s_id</label>
+            <input id="stCreateId" class="time-select admin-input" placeholder="e.g. STATION_001">
           </div>
 
-          <div class="admin-table-wrap">
-            <table class="admin-table">
-              <thead>
-                <tr>
-                  <th style="width: 28%">s_id</th>
-                  <th>s_name</th>
-                  <th style="width: 28%">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="stationsTbody">
-                <!-- injected -->
-              </tbody>
-            </table>
+          <div>
+            <label class="admin-label" for="stCreateName">Station name</label>
+            <input id="stCreateName" class="time-select admin-input" placeholder="e.g. Campus Station">
           </div>
+
+          <button class="btn" id="btnCreateStation" type="button">Create</button>
+        </div>
+
+        <div class="admin-hint">
+          Tip: <b>s_id</b> should match what your ESP sends as station id.
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="admin-head">
+          <div class="chart-title">Stations list</div>
+          <input id="stSearch" class="time-select" style="padding:10px; min-width:220px;" placeholder="Search...">
+        </div>
+
+        <div class="admin-table-wrap mt-16">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>s_id</th>
+                <th>s_name</th>
+                <th style="width:220px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="stationsTbody"></tbody>
+          </table>
         </div>
       </div>
     </section>
 
-    <!-- NODES -->
-    <section class="admin-section" id="tab-nodes" data-panel="nodes" role="tabpanel">
-      <div class="admin-grid">
-        <!-- Create -->
-        <div class="admin-card">
-          <div class="admin-card-head">
-            <div class="admin-card-title">Create Node</div>
-            <div class="admin-card-sub">Map nodes to stations (metadata only)</div>
-          </div>
-
-          <div class="admin-form">
-            <label class="admin-label" for="nodeStationSelect">Station (s_id)</label>
-            <select class="admin-input" id="nodeStationSelect">
-              <option value="">-- choose station --</option>
-            </select>
-
-            <label class="admin-label" for="n_name">Node name (n_name)</label>
-            <input class="admin-input" id="n_name" placeholder="node1" />
-
-            <label class="admin-label" for="display_name">Display name (optional)</label>
-            <input class="admin-input" id="display_name" placeholder="Garden sensor" />
-
-            <div class="admin-actions">
-              <button class="btn" id="createNode" type="button">Create</button>
-              <button class="btn btn-ghost" id="clearNodeForm" type="button">Clear</button>
-            </div>
-
-            <p class="admin-hint">
-              This does <b>not</b> edit measurements. It’s only metadata for what nodes exist.
-            </p>
-          </div>
+    <!-- NODES PANEL -->
+    <section id="panelNodes" class="admin-panel" style="display:none;">
+      <div class="chart-card mb-16">
+        <div class="chart-head">
+          <div class="chart-title">Create node (metadata)</div>
         </div>
 
-        <!-- List -->
-        <div class="admin-card">
-          <div class="admin-card-head">
-            <div class="admin-card-title">Nodes List</div>
-            <div class="admin-card-sub">Rename (display), enable/disable, delete</div>
+        <div class="admin-form admin-form--nodes">
+          <div>
+            <label class="admin-label" for="nodeCreateStation">Station</label>
+            <select id="nodeCreateStation" class="time-select admin-input"></select>
           </div>
 
-          <div class="admin-table-wrap">
-            <table class="admin-table">
-              <thead>
-                <tr>
-                  <th style="width: 18%">s_id</th>
-                  <th style="width: 18%">n_name</th>
-                  <th>display_name</th>
-                  <th style="width: 10%">active</th>
-                  <th style="width: 26%">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="nodesTbody">
-                <!-- injected -->
-              </tbody>
-            </table>
+          <div>
+            <label class="admin-label" for="nodeCreateName">n_name</label>
+            <input id="nodeCreateName" class="time-select admin-input" placeholder="e.g. node_1">
           </div>
+
+          <div>
+            <label class="admin-label" for="nodeCreateDisplay">Display name</label>
+            <input id="nodeCreateDisplay" class="time-select admin-input" placeholder="e.g. Greenhouse #1">
+          </div>
+
+          <button class="btn" id="btnCreateNode" type="button">Create</button>
+        </div>
+
+        <div class="admin-hint">
+          These rows don’t affect sensor data — only how nodes appear in the public UI (name + active).
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="admin-head">
+          <div class="chart-title">Nodes list</div>
+          <input id="nodeSearch" class="time-select" style="padding:10px; min-width:220px;" placeholder="Search...">
+        </div>
+
+        <div class="admin-table-wrap mt-16">
+          <table class="admin-table admin-table--nodes">
+            <thead>
+              <tr>
+                <th style="width:90px;">id</th>
+                <th style="width:140px;">s_id</th>
+                <th style="width:160px;">n_name</th>
+                <th>display_name</th>
+                <th style="width:140px;">active</th>
+                <th style="width:220px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="nodesTbody"></tbody>
+          </table>
         </div>
       </div>
     </section>
+
   </div>
 
-  <!-- reuse your theme -->
   <script src="../js/theme.js" defer></script>
-  <!-- admin logic -->
-  <script src="js/admin.js" defer></script>
+  <script src="admin.js" defer></script>
 </body>
 </html>
