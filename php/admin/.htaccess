@@ -1,5 +1,4 @@
 AuthType Basic
-AuthName "Admin API"
+AuthName "Admin Area"
 AuthUserFile /home/student/iee/2019/iee2019074/public_html/php/admin/.htpasswd
 Require valid-user
-
