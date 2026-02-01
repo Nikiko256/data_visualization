@@ -33,11 +33,6 @@ const API = {
   stations_update: '../php/admin/stations_update.php',
   stations_delete: '../php/admin/stations_delete.php',
 
-  nodes_list:      '../php/admin/nodes_list.php',
-  nodes_create:    '../php/admin/nodes_create.php',
-  nodes_update:    '../php/admin/nodes_update.php', // rename from nodes_updates.php OR change here
-  nodes_delete:    '../php/admin/nodes_delete.php',
-  nodes_set_active:'../php/admin/nodes_set_active.php',
 };
 
 // Data caches
