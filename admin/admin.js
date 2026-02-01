@@ -37,16 +37,20 @@ const API = {
 
 // Data caches
 let STATIONS = [];
-let NODES = [];
 
-function setTab(which){
+function showStations(){
+  document.getElementById('panelStations').style.display = 'block';
+  document.getElementById('tabStations').classList.add('is-active');
+}
+
+/*function setTab(which){
   const stBtn = document.getElementById('tabStations');
   const ndBtn = document.getElementById('tabNodes');
   document.getElementById('panelStations').style.display = which === 'stations' ? 'block' : 'none';
   document.getElementById('panelNodes').style.display    = which === 'nodes' ? 'block' : 'none';
   stBtn.classList.toggle('is-active', which === 'stations');
   ndBtn.classList.toggle('is-active', which === 'nodes');
-}
+} */
 
 function renderStations(filter=''){
   const tb = document.getElementById('stationsTbody');
@@ -76,7 +80,7 @@ function refillStationsSelect(){
 
 function renderNodes(filter=''){
   const tb = document.getElementById('nodesTbody');
-  const q = filter.trim().toLowerCase();
+  const q = filter.trim().toLowerCase(); 
 
   const rows = NODES.filter(n => {
     const hay = `${n.id} ${n.s_id} ${n.n_name} ${n.display_name||''} ${n.is_active}`.toLowerCase();
@@ -111,21 +115,71 @@ function renderNodes(filter=''){
   }).join('');
 }
 
+
 async function reloadAll(){
-  // IMPORTANT: you MUST have stations_list endpoint that returns stations.
-  // If you don't have it, tell me its filename and I adapt API.stations_list.
   const st = await getJSON(API.stations_list);
-  STATIONS = st.data || st.stations || [];  // accept either key
-
-  const nd = await getJSON(API.nodes_list);
-  NODES = nd.data || [];
-
-  refillStationsSelect();
+  STATIONS = st.data || st.stations || [];
   renderStations(document.getElementById('stSearch').value || '');
-  renderNodes(document.getElementById('nodeSearch').value || '');
 }
 
+
+
 document.addEventListener('DOMContentLoaded', async () => {
+  showStations();
+
+  document.getElementById('tabStations')
+    .addEventListener('click', showStations);
+
+  document.getElementById('stSearch')
+    .addEventListener('input', e => renderStations(e.target.value));
+
+  document.getElementById('btnCreateStation').addEventListener('click', async () => {
+    const s_id = document.getElementById('stCreateId').value.trim();
+    const s_name = document.getElementById('stCreateName').value.trim();
+    if (!s_id || !s_name) return alert('Fill s_id and s_name');
+
+    await postJSON(API.stations_create, { s_id, s_name });
+
+    document.getElementById('stCreateId').value = '';
+    document.getElementById('stCreateName').value = '';
+    await reloadAll();
+  });
+
+  // keep only station actions
+  document.body.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+
+    const act = btn.dataset.act;
+
+    if (act === 'st-save') {
+      const s_id = btn.dataset.sid;
+      const input = document.querySelector(`input[data-st-id="${CSS.escape(s_id)}"]`);
+      const s_name = input.value.trim();
+      await postJSON(API.stations_update, { s_id, s_name });
+      await reloadAll();
+      alert('Saved.');
+    }
+
+    if (act === 'st-del') {
+      const s_id = btn.dataset.sid;
+      if (!confirm(`Delete station ${s_id}?`)) return;
+      await postJSON(API.stations_delete, { s_id });
+      await reloadAll();
+    }
+  });
+
+  try {
+    await reloadAll();
+  } catch (err) {
+    console.error(err);
+    alert('Admin API error: ' + (err.message || err));
+  }
+});
+
+
+
+/*document.addEventListener('DOMContentLoaded', async () => {
   setTab('stations');
 
   document.getElementById('tabStations').addEventListener('click', () => setTab('stations'));
@@ -210,4 +264,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error(err);
     alert('Admin API error: ' + (err.message || err));
   }
-});
+}); */
