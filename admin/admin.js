@@ -265,3 +265,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     alert('Admin API error: ' + (err.message || err));
   }
 }); */
+
+//stations list
+fetch('../php/admin/stations_list.php', { cache: 'no-store' })
+  .then(r => r.text().then(t => ({ ok:r.ok, status:r.status, text:t })))
+  .then(x => { console.log(x); try { console.log("JSON:", JSON.parse(x.text)); } catch(e) { console.error("NOT JSON", e); }});
+
+//stations create
+fetch('/php/admin/stations_create.php', {
+  method: 'POST',
+  headers: {'Content-Type':'application/json'},
+  body: JSON.stringify({ s_id: 'TEST_ST_001', s_name: 'Test Station' })
+})
+.then(async r => ({status:r.status, ok:r.ok, text: await r.text()}))
+.then(x => { console.log(x); try { console.log(JSON.parse(x.text)); } catch(e) { console.log("NOT JSON:", x.text); }});
+
+//stations update
+
+fetch('/php/admin/stations_update.php', {
+  method: 'POST',
+  headers: {'Content-Type':'application/json'},
+  body: JSON.stringify({ s_id: 'TEST_ST_001', s_name: 'Renamed Station' })
+})
+.then(async r => ({status:r.status, ok:r.ok, text: await r.text()}))
+.then(x => { console.log(x); try { console.log(JSON.parse(x.text)); } catch(e) { console.log("NOT JSON:", x.text); }});
+
+
+//stations delete
+
+fetch('/php/admin/stations_delete.php', {
+  method: 'POST',
+  headers: {'Content-Type':'application/json'},
+  body: JSON.stringify({ s_id: 'TEST_ST_001' })
+})
+.then(async r => ({status:r.status, ok:r.ok, text: await r.text()}))
+.then(x => { console.log(x); try { console.log(JSON.parse(x.text)); } catch(e) { console.log("NOT JSON:", x.text); }});
