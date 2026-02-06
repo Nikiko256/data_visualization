@@ -19,6 +19,8 @@ mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 require_once __DIR__ . '/load_env.php';
 loadEnv(__DIR__ . '/../.env');
 
+
+
 header('Content-Type: application/json');
 
 // Step 1: Get the input data
