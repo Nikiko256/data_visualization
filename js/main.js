@@ -1,5 +1,6 @@
 
 document.addEventListener('DOMContentLoaded', () => {
+if (!listEl || !searchInput) return;
       const listEl = document.getElementById('stationsList');
       const searchInput = document.getElementById('searchInput');
       let stations = [];
