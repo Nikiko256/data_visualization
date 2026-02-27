@@ -34,7 +34,7 @@ const API = {
   stations_delete: '../php/admin/stations_delete.php',
 
   pending_list: '../php/admin/pending_list.php',
-  pending_mark: '../php/admin/pending_mark.php',
+  pending_mark: '../php/admin/pending_mark_seen.php',
 
 };
 
@@ -128,6 +128,8 @@ async function reloadAll(){
 
 
 document.addEventListener('DOMContentLoaded', async () => {
+  await reloadPending();
+  setInterval(() => reloadPending().catch(console.error), 15000);
   showStations();
 
   document.getElementById('tabStations')
@@ -146,8 +148,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('stCreateId').value = '';
     document.getElementById('stCreateName').value = '';
     await reloadAll();
-    await reloadPending();
-    setInterval(() => reloadPending().catch(console.error), 15000);
   });
 
   // keep only station actions
@@ -174,10 +174,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (act === 'pending-seen') {
-      const s_id = btn.dataset.sid;
+      const s_id = btn.dataset.sid; // από data-sid
       await postJSON(API.pending_mark, { s_id });
       await reloadPending();
-}
+    }
 
   });
 
