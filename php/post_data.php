@@ -113,6 +113,7 @@ try {
     mysqli_stmt_close($stmt);
 
     // Step 7: Insert into `stations` if not exists
+    /*
     $check_station = mysqli_prepare($dbcnx, "SELECT s_id FROM stations WHERE s_id = ?");
     mysqli_stmt_bind_param($check_station, 's', $s_id);
     mysqli_stmt_execute($check_station);
@@ -131,6 +132,19 @@ try {
     } else {
         mysqli_stmt_close($check_station);
     }
+        */
+    $check_station = mysqli_prepare($dbcnx, "SELECT 1 FROM stations WHERE s_id = ? LIMIT 1");
+    mysqli_stmt_bind_param($check_station, 's', $s_id);
+    mysqli_stmt_execute($check_station);
+    mysqli_stmt_store_result($check_station);
+
+    if (mysqli_stmt_num_rows($check_station) === 0) {
+        mysqli_stmt_close($check_station);
+        http_response_code(403);
+        echo json_encode(["status"=>"error","message"=>"Unknown station_id. Create it from admin panel first."]);
+        exit;
+    }
+    mysqli_stmt_close($check_station);
 
     // Step 8: Return response
     echo json_encode([
