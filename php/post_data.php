@@ -65,7 +65,40 @@ try {
     $dbcnx = mysqli_connect($host, $user, $pass, $db);
 
     // Step 5: Create table [s_id] if it doesn't exist
-    $s_id_sanitized = preg_replace('/[^a-zA-Z0-9_]/', '_', $s_id); // Prevent SQL injection in table name
+    $s_id_sanitized = preg_replace('/[^a-zA-Z0-9_]/', '_', $s_id);
+    $table_check = mysqli_query($dbcnx, "SHOW TABLES LIKE '{$s_id_sanitized}'");
+
+    $is_new_station = (mysqli_num_rows($table_check) === 0);
+
+    if ($is_new_station) {
+        $create_table_sql = "
+            CREATE TABLE `{$s_id_sanitized}` (
+                n_name        VARCHAR(50),
+                soilTemp      FLOAT,
+                soilMoist     FLOAT,
+                airTemp       FLOAT,
+                airHumid      FLOAT,
+                airPress      FLOAT,
+                rainDepth     FLOAT,
+                windSpeed     FLOAT,
+                windDirection VARCHAR(10),
+                created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (n_name, created_at)
+            )
+        ";
+        mysqli_query($dbcnx, $create_table_sql);
+
+        // Notify CRUD panel ONCE (first measurement for this s_id)
+        $ins = mysqli_prepare($dbcnx, "
+            INSERT INTO pending_stations (s_id, seen)
+            VALUES (?, 0)
+            ON DUPLICATE KEY UPDATE last_seen = CURRENT_TIMESTAMP
+        ");
+        mysqli_stmt_bind_param($ins, 's', $s_id_sanitized);
+        mysqli_stmt_execute($ins);
+        mysqli_stmt_close($ins);
+    }
+    /* $s_id_sanitized = preg_replace('/[^a-zA-Z0-9_]/', '_', $s_id); // Prevent SQL injection in table name
     $table_check = mysqli_query($dbcnx, "SHOW TABLES LIKE '{$s_id_sanitized}'");
 
     if (mysqli_num_rows($table_check) === 0) {
@@ -85,7 +118,7 @@ try {
             )
         ";
         mysqli_query($dbcnx, $create_table_sql);
-    }
+    } */
 
     // Step 6: Insert data into the [s_id] table
     $insert_sql = "
