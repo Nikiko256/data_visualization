@@ -33,6 +33,9 @@ const API = {
   stations_update: '../php/admin/stations_update.php',
   stations_delete: '../php/admin/stations_delete.php',
 
+  pending_list: '../php/admin/pending_list.php',
+  pending_mark: '../php/admin/pending_mark.php',
+
 };
 
 // Data caches
