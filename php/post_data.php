@@ -99,7 +99,7 @@ try {
     mysqli_stmt_bind_param(
         $stmt,
         'sddddddds',
-        $n_name,
+        //$n_name,
         $soil_temperature,
         $soil_moisture,
         $air_temperature,
