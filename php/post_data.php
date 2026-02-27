@@ -195,9 +195,6 @@ try {
         "message" => $e->getMessage()
     ]);
 }
-?>
-
-
 
 // Check if station exists
 $chk = mysqli_prepare($dbcnx, "SELECT 1 FROM stations WHERE s_id=? LIMIT 1");
@@ -222,3 +219,7 @@ if (!$exists) {
     echo json_encode(["status"=>"pending","message"=>"Station not registered yet","s_id"=>$s_id]);
     exit;
 }
+?>
+
+
+
