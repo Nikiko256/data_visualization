@@ -51,9 +51,9 @@ $air_pressure      = floatval($values[4]);
 $rain_depth        = floatval($values[5]);
 $wind_speed        = floatval($values[6]);
 $wind_direction    = trim($values[7]); // VARCHAR
-$n_name            = trim($values[8]); // node name
+//$n_name            = trim($values[8]); // node name
 $s_id              = trim($values[9]); // station id
-$s_name            = trim($values[10]); // station name
+//$s_name            = trim($values[10]); // station name
 
 try {
     // Step 4: Connect to DB
