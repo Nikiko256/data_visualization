@@ -38,6 +38,23 @@
 
     <!-- STATIONS PANEL -->
     <section id="panelStations" class="admin-panel" style="display:none;">
+      <div class="chart-card mb-16" id="pendingBox" style="display:none;">
+        <div class="admin-head">
+          <div class="chart-title">New station requests</div>
+        </div>
+        <div class="admin-table-wrap mt-16">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>s_id</th>
+                <th>last_seen</th>
+                <th style="width:220px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="pendingTbody"></tbody>
+          </table>
+        </div>
+      </div>
       <div class="chart-card mb-16">
         <div class="chart-head">
           <div class="chart-title">Create station</div>

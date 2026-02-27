@@ -303,3 +303,39 @@ fetch('/php/admin/stations_delete.php', {
 })
 .then(async r => ({status:r.status, ok:r.ok, text: await r.text()}))
 .then(x => { console.log(x); try { console.log(JSON.parse(x.text)); } catch(e) { console.log("NOT JSON:", x.text); }});
+
+
+let PENDING = [];
+
+function renderPending(){
+  const unseen = PENDING.filter(p => String(p.seen) === '0');
+  const badge = document.getElementById('pendingBadge');
+  const box = document.getElementById('pendingBox');
+  const tb = document.getElementById('pendingTbody');
+
+  if (unseen.length === 0){
+    badge.style.display = 'none';
+    box.style.display = 'none';
+    return;
+  }
+
+  badge.textContent = String(unseen.length);
+  badge.style.display = 'inline-block';
+  box.style.display = 'block';
+
+  tb.innerHTML = unseen.map(p => `
+    <tr style="border-top:1px solid var(--white-10);">
+      <td style="padding:10px; color:var(--muted);">${esc(p.s_id)}</td>
+      <td style="padding:10px; color:var(--muted);">${esc(p.last_seen)}</td>
+      <td style="padding:10px; white-space:nowrap;">
+        <button class="btn" data-act="pending-seen" data-sid="${esc(p.s_id)}">Mark seen</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function reloadPending(){
+  const p = await getJSON(API.pending_list);
+  PENDING = p.data || [];
+  renderPending();
+}
