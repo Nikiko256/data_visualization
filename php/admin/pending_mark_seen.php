@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/_db.php';
+
 $in = read_json();
 $s_id = trim($in['s_id'] ?? '');
 if ($s_id === '') fail(422, "Missing s_id");
