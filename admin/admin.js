@@ -146,6 +146,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('stCreateId').value = '';
     document.getElementById('stCreateName').value = '';
     await reloadAll();
+    await reloadPending();
+    setInterval(() => reloadPending().catch(console.error), 15000);
   });
 
   // keep only station actions
