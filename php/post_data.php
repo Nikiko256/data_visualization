@@ -53,7 +53,7 @@ $wind_speed        = floatval($values[6]);
 $wind_direction    = trim($values[7]); // VARCHAR
 $n_name            = trim($values[8]); // node name
 $s_id              = trim($values[9]); // station id
-$s_name            = trim($values[10]); // station name
+//$s_name            = trim($values[10]); // station name
 
 try {
     // Step 4: Connect to DB
@@ -99,7 +99,7 @@ try {
     mysqli_stmt_bind_param(
         $stmt,
         'sddddddds',
-        //$n_name,
+        $n_name,
         $soil_temperature,
         $soil_moisture,
         $air_temperature,
@@ -163,3 +163,29 @@ try {
     ]);
 }
 ?>
+
+
+
+// Check if station exists
+$chk = mysqli_prepare($dbcnx, "SELECT 1 FROM stations WHERE s_id=? LIMIT 1");
+mysqli_stmt_bind_param($chk, 's', $s_id);
+mysqli_stmt_execute($chk);
+mysqli_stmt_store_result($chk);
+$exists = mysqli_stmt_num_rows($chk) > 0;
+mysqli_stmt_close($chk);
+
+if (!$exists) {
+    // Insert/refresh pending (one row per s_id)
+    $ins = mysqli_prepare($dbcnx, "
+        INSERT INTO pending_stations (s_id, seen)
+        VALUES (?, 0)
+        ON DUPLICATE KEY UPDATE last_seen = CURRENT_TIMESTAMP
+    ");
+    mysqli_stmt_bind_param($ins, 's', $s_id);
+    mysqli_stmt_execute($ins);
+    mysqli_stmt_close($ins);
+
+    http_response_code(202);
+    echo json_encode(["status"=>"pending","message"=>"Station not registered yet","s_id"=>$s_id]);
+    exit;
+}
