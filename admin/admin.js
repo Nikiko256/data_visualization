@@ -172,6 +172,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       await postJSON(API.stations_delete, { s_id });
       await reloadAll();
     }
+
+    if (act === 'pending-seen') {
+      const s_id = btn.dataset.sid;
+      await postJSON(API.pending_mark, { s_id });
+      await reloadPending();
+}
+
   });
 
   try {
