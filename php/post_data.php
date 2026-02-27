@@ -166,7 +166,7 @@ try {
         mysqli_stmt_close($check_station);
     }
         */
-    $check_station = mysqli_prepare($dbcnx, "SELECT 1 FROM stations WHERE s_id = ? LIMIT 1");
+    /*$check_station = mysqli_prepare($dbcnx, "SELECT 1 FROM stations WHERE s_id = ? LIMIT 1");
     mysqli_stmt_bind_param($check_station, 's', $s_id);
     mysqli_stmt_execute($check_station);
     mysqli_stmt_store_result($check_station);
@@ -177,7 +177,7 @@ try {
         echo json_encode(["status"=>"error","message"=>"Unknown station_id. Create it from admin panel first."]);
         exit;
     }
-    mysqli_stmt_close($check_station);
+    mysqli_stmt_close($check_station); */
 
     // Step 8: Return response
     echo json_encode([
