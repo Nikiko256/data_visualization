@@ -62,16 +62,16 @@ try {
       )
     ");
 
-    // notify CRUD once
-    $ins = mysqli_prepare($dbcnx, "
+    //notify CRUD once
+    /*$ins = mysqli_prepare($dbcnx, "
       INSERT INTO pending_stations (s_id, seen)
       VALUES (?, 0)
       ON DUPLICATE KEY UPDATE last_seen = CURRENT_TIMESTAMP
     ");
     mysqli_stmt_bind_param($ins, 's', $s_id_sanitized);
     mysqli_stmt_execute($ins);
-    mysqli_stmt_close($ins);
-  }
+    mysqli_stmt_close($ins); */
+  } 
 
   // insert measurement
   $stmt = mysqli_prepare($dbcnx, "

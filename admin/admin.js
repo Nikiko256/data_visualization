@@ -33,8 +33,8 @@ const API = {
   stations_update: '../php/admin/stations_update.php',
   stations_delete: '../php/admin/stations_delete.php',
 
-  pending_list: '../php/admin/pending_list.php',
-  pending_mark: '../php/admin/pending_mark_seen.php',
+  //pending_list: '../php/admin/pending_list.php',
+  //pending_mark: '../php/admin/pending_mark_seen.php',
 
 };
 
@@ -128,8 +128,8 @@ async function reloadAll(){
 
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await reloadPending();
-  setInterval(() => reloadPending().catch(console.error), 15000);
+  //await reloadPending();
+  //setInterval(() => reloadPending().catch(console.error), 15000);
   showStations();
 
   document.getElementById('tabStations')
@@ -173,11 +173,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       await reloadAll();
     }
 
-    if (act === 'pending-seen') {
+    /*if (act === 'pending-seen') {
       const s_id = btn.dataset.sid; // από data-sid
       await postJSON(API.pending_mark, { s_id });
       await reloadPending();
-    }
+    } */
 
   });
 
@@ -278,8 +278,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 }); */
 
+
+
+
+//REMOVING NOTIFICATIONS
+
 //stations list
-fetch('../php/admin/stations_list.php', { cache: 'no-store' })
+/*fetch('../php/admin/stations_list.php', { cache: 'no-store' })
   .then(r => r.text().then(t => ({ ok:r.ok, status:r.status, text:t })))
   .then(x => { console.log(x); try { console.log("JSON:", JSON.parse(x.text)); } catch(e) { console.error("NOT JSON", e); }});
 
@@ -314,9 +319,9 @@ fetch('/php/admin/stations_delete.php', {
 .then(x => { console.log(x); try { console.log(JSON.parse(x.text)); } catch(e) { console.log("NOT JSON:", x.text); }});
 
 
-let PENDING = [];
+//let PENDING = [];
 
-function renderPending(){
+/*function renderPending(){
   const unseen = PENDING.filter(p => String(p.seen) === '0');
   const badge = document.getElementById('pendingBadge');
   const box = document.getElementById('pendingBox');
@@ -341,10 +346,10 @@ function renderPending(){
       </td>
     </tr>
   `).join('');
-}
+} */
 
-async function reloadPending(){
+/*async function reloadPending(){
   const p = await getJSON(API.pending_list);
   PENDING = p.data || [];
   renderPending();
-}
+} */
