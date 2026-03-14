@@ -1,8 +1,8 @@
 
 document.addEventListener('DOMContentLoaded', () => {
-if (!listEl || !searchInput) return;
-      const listEl = document.getElementById('stationsList');
-      const searchInput = document.getElementById('searchInput');
+  const listEl = document.getElementById('stationsList');
+  const searchInput = document.getElementById('searchInput');
+  if (!listEl || !searchInput) return;
       let stations = [];
 
       // Fetch station names from the deployed endpoint

@@ -1,25 +1,21 @@
-// --- Helpers ---
 function getParam(name) {
   return new URLSearchParams(window.location.search).get(name);
 }
 
-// POST helper: try JSON; if it fails (non-2xx or JSON parse error), retry as form-encoded.
 async function postSmart(url, payload) {
-  // 1) Try JSON
   try {
     const r = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    const text = await r.text(); // read once
+    const text = await r.text();
     let data;
     try { data = JSON.parse(text); }
     catch { throw new Error(`Non-JSON response (${r.status}): ${text.slice(0,200)}`); }
     if (!r.ok) throw new Error(data?.message || `HTTP ${r.status}`);
     return data;
   } catch (e1) {
-    // 2) Retry as form-encoded
     const form = new URLSearchParams();
     Object.entries(payload).forEach(([k, v]) => form.append(k, v ?? ''));
     const r2 = await fetch(url, {
@@ -36,54 +32,95 @@ async function postSmart(url, payload) {
   }
 }
 
+function prettyLabel(key) {
+  const map = {
+    soilTemp: 'Soil Temperature',
+    soilMoist: 'Soil Moisture',
+    airTemp: 'Air Temperature',
+    airHumid: 'Air Humidity',
+    airPress: 'Air Pressure',
+    rainDepth: 'Rain Depth',
+    windSpeed: 'Wind Speed',
+    windDirection: 'Wind Direction'
+  };
+  return map[key] || key;
+}
+
+function unitForKey(key) {
+  const map = {
+    soilTemp: '°C',
+    soilMoist: '%',
+    airTemp: '°C',
+    airHumid: '%',
+    airPress: 'hPa',
+    rainDepth: 'mm',
+    windSpeed: 'km/h'
+  };
+  return map[key] || '';
+}
+
+function renderAverageCards(avgData) {
+  const container = document.getElementById('dataSection');
+  container.innerHTML = '';
+
+  const averages = avgData.averages || {};
+
+  Object.entries(averages).forEach(([key, value]) => {
+    const card = document.createElement('div');
+    card.className = 'chart-card';
+
+    const title = document.createElement('h3');
+    title.className = 'chart-title';
+    title.textContent = prettyLabel(key);
+
+    const val = document.createElement('p');
+    val.className = 'avg-value';
+
+    if (value === null || value === undefined) {
+      val.textContent = 'No data';
+    } else if (key === 'windDirection') {
+      val.textContent = value;
+    } else {
+      const unit = unitForKey(key);
+      val.textContent = `${Number(value).toFixed(2)}${unit ? ' ' + unit : ''}`;
+    }
+
+    card.appendChild(title);
+    card.appendChild(val);
+    container.appendChild(card);
+  });
+
+  const meta = document.createElement('div');
+  meta.className = 'station-meta';
+  meta.innerHTML = `
+    <p><strong>Nodes used:</strong> ${avgData.node_count ?? 0}</p>
+    <p><strong>Latest update:</strong> ${avgData.latest_created_at ?? 'N/A'}</p>
+  `;
+  container.appendChild(meta);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  const sName    = getParam('s_name');
-  const titleEl  = document.getElementById('stationTitle');
-  const selectEl = document.getElementById('nodeSelect');
-  const container= document.getElementById('dataSection');
+  const sName = getParam('s_name');
+  const titleEl = document.getElementById('stationTitle');
+  const container = document.getElementById('dataSection');
 
   titleEl.textContent = `Station: ${sName ?? ''}`;
 
   if (!sName) {
-    container.innerHTML = `<p class="error">No station specified (missing ?s_name=...).</p>`;
+    container.innerHTML = `<p class="error">No station specified.</p>`;
     return;
   }
 
-  // 1) Populate the node dropdown
-  postSmart('https://users.iee.ihu.gr/~iee2019074/php/get_node_names.php', { s_name: sName })
+  postSmart('https://users.iee.ihu.gr/~iee2019074/php/get_station_average.php', { s_name: sName })
     .then(j => {
-      if (j.status === 'success' && Array.isArray(j.node_names)) {
-        j.node_names.forEach(n => {
-          const o = document.createElement('option');
-          o.value = n; o.textContent = n;
-          selectEl.appendChild(o);
-        });
+      if (j.status === 'success') {
+        renderAverageCards(j);
       } else {
-        container.innerHTML = `<p class="error">${j.message || 'Failed loading nodes'}</p>`;
+        container.innerHTML = `<p class="error">${j.message || 'Failed to load station averages'}</p>`;
       }
     })
     .catch(err => {
-      console.error('Nodes error:', err);
-      container.innerHTML = `<p class="error">Failed loading nodes: ${String(err.message || err)}</p>`;
+      console.error('Average data error:', err);
+      container.innerHTML = `<p class="error">Failed to load station averages: ${String(err.message || err)}</p>`;
     });
-
-  // 2) When a node is chosen, fetch ALL its data once
-  selectEl.addEventListener('change', () => {
-    const node = selectEl.value;
-    container.innerHTML = '';
-    if (!node) return;
-
-    postSmart('https://users.iee.ihu.gr/~iee2019074/php/get_node.php', { s_name: sName, n_name: node })
-      .then(j => {
-        if (j.status === 'success' && Array.isArray(j.data)) {
-          graphData(j.data, sName, node); // pass station & node so per-chart requery can work
-        } else {
-          container.innerHTML = `<p class="error">${j.message || 'Failed to load data'}</p>`;
-        }
-      })
-      .catch(err => {
-        console.error('Data error:', err);
-        container.innerHTML = `<p class="error">Failed to load data: ${String(err.message || err)}</p>`;
-      });
-  });
 });

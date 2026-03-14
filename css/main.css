@@ -825,3 +825,16 @@ header{
   transform: translateY(-50%);
   padding: 8px 10px;
 }
+
+.avg-value {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-top: 10px;
+}
+
+.station-meta {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--card, rgba(255,255,255,0.05));
+}
