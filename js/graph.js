@@ -566,12 +566,22 @@ function buildChartCard({ field, rows, station, node, large = false }) {
   select.addEventListener('change', async () => {
     const val = select.value;
     let url, body;
-    if (val === 'all') {
-      url  = 'https://users.iee.ihu.gr/~iee2019074/php/get_node.php';
-      body = { s_name: station, n_name: node };
+    if (node) {
+      if (val === 'all') {
+        url  = 'https://users.iee.ihu.gr/~iee2019074/php/get_node.php';
+        body = { s_name: station, n_name: node };
+      } else {
+        url  = 'https://users.iee.ihu.gr/~iee2019074/php/get_node_by_time.php';
+        body = { s_name: station, n_name: node, hours: parseInt(val, 10) };
+      }
     } else {
-      url  = 'https://users.iee.ihu.gr/~iee2019074/php/get_node_by_time.php';
-      body = { s_name: station, n_name: node, hours: parseInt(val, 10) };
+      if (val === 'all') {
+        url  = 'https://users.iee.ihu.gr/~iee2019074/php/get_station_history.php';
+        body = { s_name: station };
+      } else {
+        url  = 'https://users.iee.ihu.gr/~iee2019074/php/get_station_history_by_time.php';
+        body = { s_name: station, hours: parseInt(val, 10) };
+      }
     }
 
     card.classList.add('skeleton');
@@ -759,12 +769,22 @@ function buildWindCard({ rows, station, node, large = false }) {
   select.addEventListener('change', async () => {
     const val = select.value;
     let url, body;
-    if (val === 'all') {
-      url  = 'https://users.iee.ihu.gr/~iee2019074/php/get_node.php';
-      body = { s_name: station, n_name: node };
+    if (node) {
+      if (val === 'all') {
+        url  = 'https://users.iee.ihu.gr/~iee2019074/php/get_node.php';
+        body = { s_name: station, n_name: node };
+      } else {
+        url  = 'https://users.iee.ihu.gr/~iee2019074/php/get_node_by_time.php';
+        body = { s_name: station, n_name: node, hours: parseInt(val, 10) };
+      }
     } else {
-      url  = 'https://users.iee.ihu.gr/~iee2019074/php/get_node_by_time.php';
-      body = { s_name: station, n_name: node, hours: parseInt(val, 10) };
+      if (val === 'all') {
+        url  = 'https://users.iee.ihu.gr/~iee2019074/php/get_station_history.php';
+        body = { s_name: station };
+      } else {
+        url  = 'https://users.iee.ihu.gr/~iee2019074/php/get_station_history_by_time.php';
+        body = { s_name: station, hours: parseInt(val, 10) };
+      }
     }
 
     card.classList.add('skeleton');
@@ -811,7 +831,7 @@ function graphData(rows, station, node) {
   container.innerHTML = '';
 
   if (!rows || rows.length === 0) {
-    container.innerHTML = '<div class="empty">No data available for this node.</div>';
+    container.innerHTML = '<div class="empty">No data available for this station.</div>';
     return;
   }
 
