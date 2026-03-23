@@ -7,13 +7,10 @@
   <link rel="stylesheet" href="css/main.css">
 
   <script>
-    (function () {
-      const key = "theme";
-      const saved = localStorage.getItem(key);
-      const prefersLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
-      const theme = saved || (prefersLight ? "light" : "dark");
-      document.documentElement.dataset.theme = theme;
-    })();
+  (function () {
+    const saved = localStorage.getItem("theme");
+    document.documentElement.dataset.theme = saved === "light" ? "light" : "dark";
+  })();
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>

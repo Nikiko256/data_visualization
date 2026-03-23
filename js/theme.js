@@ -3,16 +3,14 @@
 
   function getInitialTheme() {
     const saved = localStorage.getItem(key);
-    if (saved === "light" || saved === "dark") return saved;
-    const prefersLight = window.matchMedia?.("(prefers-color-scheme: light)")?.matches;
-    return prefersLight ? "light" : "dark";
+    return saved === "light" ? "light" : "dark";;
   }
 
   function apply(theme) {
     document.documentElement.dataset.theme = theme;
-    localStorage.setItem("theme", theme);
+    localStorage.setItem(key, theme);
 
-    if (window.rethemeAllCharts) window.rethemeAllCharts();
+    //if (window.rethemeAllCharts) window.rethemeAllCharts();
     // update button icon (sun when light, moon when dark)
     const btn = document.getElementById("themeToggle");
     if (btn) btn.textContent = theme === "light" ? "🌙" : "☀️";
