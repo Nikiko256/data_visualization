@@ -13,7 +13,7 @@
     //if (window.rethemeAllCharts) window.rethemeAllCharts();
     // update button icon (sun when light, moon when dark)
     const btn = document.getElementById("themeToggle");
-    if (btn) btn.textContent = theme === "light" ? "🌙" : "☀️";
+    if (btn) btn.textContent = theme === "light" ? "☀️" : "🌙";
 
     // if you later add chart re-theming:
     if (window.rethemeAllCharts) window.rethemeAllCharts();
@@ -27,7 +27,7 @@
     if (!btn) return;
 
     // ensure correct icon after DOM is ready
-    btn.textContent = (document.documentElement.dataset.theme === "light") ? "🌙" : "☀️";
+    btn.textContent = (document.documentElement.dataset.theme === "light") ? "☀️" : "🌙";
 
     btn.addEventListener("click", () => {
       const cur = document.documentElement.dataset.theme;
