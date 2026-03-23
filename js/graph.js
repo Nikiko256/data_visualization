@@ -445,7 +445,7 @@ function buildChartCard({ field, rows, station, node, large = false }) {
 
   // Header
   const head = el('div', 'chart-head');
-  const nodeName = rows[0]?.n_name || '';
+  //const nodeName = rows[0]?.n_name || '';
   const title = el('div', 'chart-title', `${prettyLabel(field)} (${unitForKey(field) || 'N/A'})`);
   title.style.fontSize = 'clamp(16px, 2.2vw, 22px)';
 
@@ -461,6 +461,7 @@ function buildChartCard({ field, rows, station, node, large = false }) {
   ].forEach(([lbl, val]) => {
     const opt = document.createElement('option');
     opt.value = val; opt.textContent = lbl;
+    opt.textContent = lbl;
     select.appendChild(opt);
   });
 
@@ -502,6 +503,8 @@ function buildChartCard({ field, rows, station, node, large = false }) {
     return Number.isFinite(v) ? v : null;
   });
 
+  const validCountInitial = values.filter(v => v != null).length;
+
   const unit = unitForKey(field);
   const labelWithUnit = unit ? `${prettyLabel(field)} (${unit})` : prettyLabel(field);
 
@@ -517,6 +520,11 @@ function buildChartCard({ field, rows, station, node, large = false }) {
         borderColor: makeLineGradient(ctx),
         backgroundColor: makeFillGradient(ctx),
         fill: true,
+        pointRadius: validCountInitial === 1 ? 5 : 0,
+        pointHoverRadius: validCountInitial === 1 ? 7 : 4,
+        pointBackgroundColor: makeLineGradient(ctx),
+        pointBorderColor: makeLineGradient(ctx),
+        pointBorderWidth: validCountInitial === 1 ? 2 : 0,
       }]
     },
     options: {
@@ -589,15 +597,31 @@ function buildChartCard({ field, rows, station, node, large = false }) {
       const j = await postSmart(url, body);
       card.classList.remove('skeleton');
 
-      if (j.status === 'success' && Array.isArray(j.data)) {
+      if (j.status === 'success' && Array.isArray(j.data) && j.data.length > 0) {
         const newRows = j.data;
+        
         chart.data.labels = newRows.map(r => r.created_at);
-        chart.data.datasets[0].data = newRows.map(r => {
+
+        const updatedData = newRows.map(r => {
           const v = parseFloat(r[field]);
           return Number.isFinite(v) ? v : null;
         });
+
+        chart.data.datasets[0].data = updatedData;
+
+        const validCount = chart.data.datasets[0].data.filter(v => v != null).length;
+        chart.data.datasets[0].pointRadius = validCount === 1 ? 5 : 0;
+        chart.data.datasets[0].pointHoverRadius = validCount === 1 ? 7 : 4;
+        chart.data.datasets[0].pointBorderWidth = validCount === 1 ? 2 : 0;      
+        
         chart.update();
       } else {
+        chart.data.labels = [];
+        chart.data.datasets[0].data = [];
+        chart.data.datasets[0].pointRadius = 0;
+        chart.data.datasets[0].pointHoverRadius = 4;
+        chart.data.datasets[0].pointBorderWidth = 0;
+        chart.update();        
         showInlineError(card, j?.message || 'No data for selected range.');
       }
     } catch (err) {
@@ -605,7 +629,8 @@ function buildChartCard({ field, rows, station, node, large = false }) {
       console.error(`Error fetching ${field}:`, err);
       showInlineError(card, `Network/server error: ${String(err.message || err)}`);
     }
-  });
+  }
+);
 
   // Expand action
   if (expandBtn) {
