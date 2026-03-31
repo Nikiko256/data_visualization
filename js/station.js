@@ -60,6 +60,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (dataRes.status === 'success' && Array.isArray(dataRes.data)) {
       graphData(dataRes.data, sName, null);
+      loadTimeAverages(sName);
     } else {
       container.innerHTML = `<p class="error">${dataRes.message || 'Failed to load station data.'}</p>`;
     }

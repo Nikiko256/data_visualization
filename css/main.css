@@ -864,3 +864,48 @@ select:focus-visible{
   font-weight: 700;
   margin-top: 10px;
 }
+
+.averages-container{
+  padding: clamp(12px, 2vw, 20px);
+  border-bottom: 1px solid var(--white-10);
+}
+
+.avg-panel{
+  background: var(--white-06);
+  border: 1px solid var(--white-10);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  padding: 16px;
+}
+
+.avg-panel-title{
+  margin: 0 0 14px;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.avg-table-wrap{
+  overflow-x: auto;
+}
+
+.avg-table{
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+
+.avg-table th,
+.avg-table td{
+  padding: 12px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--white-10);
+}
+
+.avg-table th{
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.avg-table td:first-child{
+  font-weight: 600;
+}

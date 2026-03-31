@@ -880,9 +880,135 @@ function graphData(rows, station, node) {
     container.appendChild(card);
   }
 }
-
 // Auto-upgrade the top node select after DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   const ns = document.getElementById('nodeSelect');
   if (ns) window.upgradeToDropdown(ns, { variant: 'node' });
 });
+
+function calculateAverage(values, field) {
+  let filtered = values.filter(v => Number.isFinite(v));
+
+  if (field === 'soilMoist') {
+    filtered = filtered.filter(v => v !== -10 && v !== 100);
+  }
+
+  if (!filtered.length) return null;
+
+  const sum = filtered.reduce((acc, v) => acc + v, 0);
+  return sum / filtered.length;
+}
+
+function calculateFieldAverages(rows) {
+  if (!rows || !rows.length) return {};
+
+  const fields = Object.keys(rows[0]).filter(k => {
+    if (k === 'created_at' || k === 'windDirection' || k === 'n_name') return false;
+    return rows.some(r => Number.isFinite(parseFloat(r[k])));
+  });
+
+  const result = {};
+
+  fields.forEach(field => {
+    const values = rows.map(r => {
+      const v = parseFloat(r[field]);
+      return Number.isFinite(v) ? v : null;
+    });
+
+    result[field] = calculateAverage(values, field);
+  });
+
+  return result;
+}
+
+function renderTimeAverages(allAverages) {
+  const container = document.getElementById('averagesSection');
+  if (!container) return;
+
+  const ranges = [
+    { key: '24h', label: 'Last 24h' },
+    { key: '48h', label: 'Last 48h' },
+    { key: '1week', label: 'Last week' },
+    { key: '1month', label: 'Last month' },
+    { key: '1year', label: 'Last year' },
+    { key: '5years', label: 'Last 5 years' }
+  ];
+
+  const fields = Object.keys(
+    Object.values(allAverages).find(v => v && Object.keys(v).length > 0) || {}
+  );
+
+  container.innerHTML = `
+    <div class="avg-panel">
+      <h2 class="avg-panel-title">Average values by time range</h2>
+      <div class="avg-table-wrap">
+        <table class="avg-table">
+          <thead>
+            <tr>
+              <th>Measurement</th>
+              ${ranges.map(r => `<th>${r.label}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${fields.map(field => `
+              <tr>
+                <td>${prettyLabel(field)}</td>
+                ${ranges.map(r => {
+                  const value = allAverages[r.key]?.[field];
+                  const unit = unitForKey(field) || '';
+                  return `<td>${value == null ? '-' : `${value.toFixed(2)} ${unit}`}</td>`;
+                }).join('')}
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+async function loadTimeAverages(station) {
+  const container = document.getElementById('averagesSection');
+  if (container) {
+    container.innerHTML = `<div class="avg-panel"><p>Loading averages...</p></div>`;
+  }
+
+  const ranges = [
+    { key: '24h', hours: 24 },
+    { key: '48h', hours: 48 },
+    { key: '1week', hours: 168 },
+    { key: '1month', hours: 720 },
+    { key: '1year', hours: 8760 },
+    { key: '5years', hours: 43800 }
+  ];
+
+  const results = {};
+
+  try {
+    for (const range of ranges) {
+      const res = await postSmart(
+        'https://users.iee.ihu.gr/~iee2019074/php/get_station_history_by_time.php',
+        { s_name: station, hours: range.hours }
+      );
+
+      console.log('RANGE RESULT:', range.key, res);
+
+      if (res.status === 'success' && Array.isArray(res.data)) {
+        results[range.key] = calculateFieldAverages(res.data);
+      } else {
+        results[range.key] = {};
+      }
+
+      console.log('AVERAGES:', range.key, results[range.key]);
+
+    }
+
+    renderTimeAverages(results);
+  } catch (err) {
+    console.error('Failed to load time averages:', err);
+    if (container) {
+      container.innerHTML = `<div class="avg-panel"><p class="error">Failed to load averages.</p></div>`;
+    }
+  }
+}
+
