@@ -1,3 +1,13 @@
+function showPageLoader() {
+  const loader = document.getElementById('pageLoader');
+  if (loader) loader.classList.remove('is-hidden');
+}
+
+function hidePageLoader() {
+  const loader = document.getElementById('pageLoader');
+  if (loader) loader.classList.add('is-hidden');
+}
+
 function getParam(name) {
   return new URLSearchParams(window.location.search).get(name);
 }
@@ -33,6 +43,8 @@ async function postSmart(url, payload) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  showPageLoader();
+
   const sName = getParam('s_name');
   const titleEl = document.getElementById('stationTitle');
   const container = document.getElementById('dataSection');
@@ -45,6 +57,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (container) {
       container.innerHTML = `<p class="error">No station specified.</p>`;
     }
+    hidePageLoader();
     return;
   }
 
@@ -60,14 +73,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (dataRes.status === 'success' && Array.isArray(dataRes.data)) {
       graphData(dataRes.data, sName, null);
-      //loadTimeAverages(sName);
+      // loadTimeAverages(sName);
     } else {
-      container.innerHTML = `<p class="error">${dataRes.message || 'Failed to load station data.'}</p>`;
+      if (container) {
+        container.innerHTML = `<p class="error">${dataRes.message || 'Failed to load station data.'}</p>`;
+      }
     }
   } catch (err) {
     console.error(err);
     if (container) {
       container.innerHTML = `<p class="error">Failed to load charts: ${String(err.message || err)}</p>`;
     }
+  } finally {
+    hidePageLoader();
   }
 });
