@@ -16,7 +16,135 @@ function tickColor() {
 }
 
 function gridColor() {
-  return cssVar('--chart-grid', 'rgba(0,0,0,0.12)');
+  return cssVar('--chart-grid', 'rgba(0,0,0,0.04');
+}
+
+function rangeLabel(value) {
+  switch (String(value)) {
+    case 'all': return 'all time';
+    case '24': return '24h';
+    case '48': return '48h';
+    case '168': return '1 week';
+    case '720': return '1 month';
+    case '8760': return '1 year';
+    case '43800': return '5 years';
+    default: return '';
+  }
+}
+
+function calculateDominantWindDirection(rows) {
+  const stats = new Map();
+
+  rows.forEach((r) => {
+    const deg = parseWindValue(r?.windDirection);
+    if (deg == null) return;
+
+    const dir = dirFromDeg(deg);
+    if (!dir) return;
+
+    const key = dir.abbr;
+    const time = r?.created_at ? new Date(r.created_at).getTime() : -1;
+
+    if (!stats.has(key)) {
+      stats.set(key, { count: 0, latestTime: -1 });
+    }
+
+    const entry = stats.get(key);
+    entry.count += 1;
+
+    if (time > entry.latestTime) {
+      entry.latestTime = time;
+    }
+  });
+
+  if (!stats.size) return null;
+
+  let bestDir = null;
+  let bestCount = -1;
+  let bestLatestTime = -1;
+
+  for (const [dir, info] of stats.entries()) {
+    if (
+      info.count > bestCount ||
+      (info.count === bestCount && info.latestTime > bestLatestTime)
+    ) {
+      bestDir = dir;
+      bestCount = info.count;
+      bestLatestTime = info.latestTime;
+    }
+  }
+
+  return bestDir;
+}
+
+function calculateDominantWindDirection(rows) {
+  const stats = new Map();
+
+  rows.forEach((r) => {
+    const deg = parseWindValue(r?.windDirection);
+    if (deg == null) return;
+
+    const dir = dirFromDeg(deg);
+    if (!dir) return;
+
+    const key = dir.abbr;
+    const time = r?.created_at ? new Date(r.created_at).getTime() : -1;
+
+    if (!stats.has(key)) {
+      stats.set(key, { count: 0, latestTime: -1 });
+    }
+
+    const entry = stats.get(key);
+    entry.count += 1;
+
+    if (time > entry.latestTime) {
+      entry.latestTime = time;
+    }
+  });
+
+  if (!stats.size) return null;
+
+  let bestDir = null;
+  let bestCount = -1;
+  let bestLatestTime = -1;
+
+  for (const [dir, info] of stats.entries()) {
+    if (
+      info.count > bestCount ||
+      (info.count === bestCount && info.latestTime > bestLatestTime)
+    ) {
+      bestDir = dir;
+      bestCount = info.count;
+      bestLatestTime = info.latestTime;
+    }
+  }
+
+  return bestDir;
+}
+
+function getDominantWindPoint(rows) {
+  const dominantDir = calculateDominantWindDirection(rows);
+  if (!dominantDir) return null;
+
+  const target = rows
+    .filter(r => {
+      const deg = parseWindValue(r?.windDirection);
+      const dir = dirFromDeg(deg);
+      return dir && dir.abbr === dominantDir;
+    })
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+
+  if (!target) return null;
+
+  const deg = parseWindValue(target.windDirection);
+  const dir = dirFromDeg(deg);
+  if (!dir) return null;
+
+  return {
+    x: target.created_at,
+    y: dir.full,
+    _deg: deg
+  };
 }
 
 // keep references to charts so we can refresh them on theme toggle
@@ -39,7 +167,7 @@ window.registerChart = function registerChart(chart) {
 window.rethemeAllCharts = function rethemeAllCharts() {
   const r = getComputedStyle(document.documentElement);
   const ticks = r.getPropertyValue('--chart-ticks').trim() || r.getPropertyValue('--text').trim();
-  const grid  = r.getPropertyValue('--chart-grid').trim() || 'rgba(0,0,0,0.12)';
+  const grid  = r.getPropertyValue('--chart-grid').trim() || 'rgba(0,0,0,0.04)';
 
   window.__charts.forEach((ch) => {
     if (!ch || ch._destroyed) return;
@@ -80,7 +208,7 @@ window.rethemeAllCharts = function rethemeAllCharts() {
   const grid = 'rgba(255,255,255,0.12)';*/
   const text  = r.getPropertyValue('--text').trim() || '#0b1220';
   const ticks = r.getPropertyValue('--chart-ticks').trim() || text;
-  const grid  = r.getPropertyValue('--chart-grid').trim() || 'rgba(0,0,0,0.12)';
+  const grid  = r.getPropertyValue('--chart-grid').trim() || 'rgba(0,0,0,04)';
 
   const accent = r.getPropertyValue('--accent').trim() || '#6ee7f9';
   const accent2 = r.getPropertyValue('--accent-2').trim() || '#460fec';
@@ -406,7 +534,7 @@ function readChartTheme() {
   const r = getComputedStyle(document.documentElement);
   const text  = r.getPropertyValue('--text').trim() || '#111';
   const ticks = r.getPropertyValue('--chart-ticks').trim() || text;
-  const grid  = r.getPropertyValue('--chart-grid').trim() || 'rgba(0,0,0,0.12)';
+  const grid  = r.getPropertyValue('--chart-grid').trim() || 'rgba(0,0,0,0.04)';
   return { text, ticks, grid };
 }
 
@@ -449,6 +577,13 @@ function buildChartCard({ field, rows, station, node, large = false }) {
   const title = el('div', 'chart-title', `${prettyLabel(field)} (${unitForKey(field) || 'N/A'})`);
   title.style.fontSize = 'clamp(16px, 2.2vw, 22px)';
 
+  const titleWrap = el('div', 'chart-title-wrap');
+  titleWrap.appendChild(title);
+
+  const avgEl = el('div', 'chart-average', 'Average measurement over: -');
+  titleWrap.appendChild(avgEl);
+
+
   const select = el('select', 'time-select');
   [
     ['All time','all'],
@@ -481,7 +616,7 @@ function buildChartCard({ field, rows, station, node, large = false }) {
   rightBox.appendChild(select);
   if (expandBtn) rightBox.appendChild(expandBtn);
 
-  head.appendChild(title);
+  head.appendChild(titleWrap);
   head.appendChild(rightBox);
 
   window.upgradeToDropdown(select, { variant: 'time' });
@@ -502,6 +637,11 @@ function buildChartCard({ field, rows, station, node, large = false }) {
     const v = parseFloat(r[field]);
     return Number.isFinite(v) ? v : null;
   });
+
+  const initialAverage = calculateAverage(values, field);
+  avgEl.textContent = initialAverage == null
+    ? `Average measurement over ${rangeLabel(select.value)} : -` 
+    : `Average measurement over ${rangeLabel(select.value)} : ${initialAverage.toFixed(2)} ${unitForKey(field) || ''}`;
 
   const validCountInitial = values.filter(v => v != null).length;
 
@@ -525,6 +665,16 @@ function buildChartCard({ field, rows, station, node, large = false }) {
         pointBackgroundColor: makeLineGradient(ctx),
         pointBorderColor: makeLineGradient(ctx),
         pointBorderWidth: validCountInitial === 1 ? 2 : 0,
+      },
+    {
+        label: 'Average',
+        data: new Array(values.length).fill(initialAverage),
+        borderWidth: 2,
+        borderDash: [6, 6],
+        borderColor: '#ff6b6b',
+        pointRadius: 0,
+        pointHoverRadius: 0,
+        fill: false,
       }]
     },
     options: {
@@ -562,7 +712,8 @@ function buildChartCard({ field, rows, station, node, large = false }) {
         title: { display: false, text: '' }
       }
     }
-    }
+    },
+    plugins: [averageLabelPlugin]
   }));
 
   window.registerChart(chart);
@@ -607,6 +758,12 @@ function buildChartCard({ field, rows, station, node, large = false }) {
           return Number.isFinite(v) ? v : null;
         });
 
+        const updatedAverage = calculateAverage(updatedData, field);
+        chart.data.datasets[1].data = new Array(updatedData.length).fill(updatedAverage);
+        avgEl.textContent = updatedAverage == null
+          ? `Average measurement over ${rangeLabel(val)} : -`   
+          : `Average measurement over ${rangeLabel(val)} : ${updatedAverage.toFixed(2)} ${unitForKey(field) || ''}`;
+
         chart.data.datasets[0].data = updatedData;
 
         const validCount = chart.data.datasets[0].data.filter(v => v != null).length;
@@ -621,12 +778,16 @@ function buildChartCard({ field, rows, station, node, large = false }) {
         chart.data.datasets[0].pointRadius = 0;
         chart.data.datasets[0].pointHoverRadius = 4;
         chart.data.datasets[0].pointBorderWidth = 0;
-        chart.update();        
+        chart.update();     
+        avgEl.textContent = `Average measurement over ${rangeLabel(val)} : -`;  
+        chart.data.datasets[1].data = [];
         showInlineError(card, j?.message || 'No data for selected range.');
       }
     } catch (err) {
       card.classList.remove('skeleton');
       console.error(`Error fetching ${field}:`, err);
+      avgEl.textContent = `Average measurement over ${rangeLabel(val)} : -`;
+      chart.data.datasets[1].data = [];
       showInlineError(card, `Network/server error: ${String(err.message || err)}`);
     }
   }
@@ -664,9 +825,15 @@ function buildWindCard({ rows, station, node, large = false }) {
 
   // Header
   const head = el('div', 'chart-head');
-  const nodeName = rows[0]?.n_name || '';
+  //const nodeName = rows[0]?.n_name || '';
   const title = el('div', 'chart-title', `Wind Direction`);
   title.style.fontSize = 'clamp(16px, 2.2vw, 22px)';
+
+  const titleWrap = el('div', 'chart-title-wrap');
+  titleWrap.appendChild(title);
+
+  const windInfoEl = el('div', 'chart-average', 'Επικρατούσα κατεύθυνση: -');
+  titleWrap.appendChild(windInfoEl);
 
   const select = el('select', 'time-select');
   [
@@ -697,7 +864,10 @@ function buildWindCard({ rows, station, node, large = false }) {
   rightBox.appendChild(select);
   if (expandBtn) rightBox.appendChild(expandBtn);
 
-  head.appendChild(title);
+  //head.appendChild(title);
+  //head.appendChild(rightBox);
+
+  head.appendChild(titleWrap);
   head.appendChild(rightBox);
   card.appendChild(head);
 
@@ -729,7 +899,11 @@ function buildWindCard({ rows, station, node, large = false }) {
   }
 
   let { labels, points } = toSeries(rows);
-
+  const initialDominant = calculateDominantWindDirection(rows);
+  windInfoEl.textContent = initialDominant == null
+    ? `Επικρατούσα κατεύθυνση ${rangeLabel(select.value)}: -`
+    : `Επικρατούσα κατεύθυνση ${rangeLabel(select.value)}: ${initialDominant}`;
+  const dominantPoint = getDominantWindPoint(rows);
   // Build chart (dots only; no connecting line)
   const ctx = canvas.getContext('2d');
   const chart = window.registerChart (new Chart(ctx, {
@@ -738,16 +912,29 @@ function buildWindCard({ rows, station, node, large = false }) {
       labels,                    // optional when using point.x; kept for consistency
       datasets: [{
         label: 'Wind Direction',
-        data: points,            // [{x: time, y: "North"}, ...]
+        data: points,
         parsing: true,
-        showLine: false,         // dots only
+        showLine: false,
         spanGaps: false,
         borderWidth: 0,
         fill: false,
         pointRadius: 4,
         pointHoverRadius: 6,
-        pointBackgroundColor: makeLineGradient(ctx),
-      }]
+        pointBackgroundColor: makeLineGradient(ctx)},
+        {
+        label: 'Dominant',
+        data: dominantPoint ? [dominantPoint] : [],
+        parsing: true,
+        showLine: false,
+        borderWidth: 0,
+        fill: false,
+        pointRadius: 7,
+        pointHoverRadius: 9,
+        pointBackgroundColor: '#ff6b6b',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+      }
+    ]
     },
     options: {
       responsive: true,
@@ -818,18 +1005,28 @@ function buildWindCard({ rows, station, node, large = false }) {
       card.classList.remove('skeleton');
       if (j.status === 'success' && Array.isArray(j.data)) {
         const series = toSeries(j.data);
+        const dominantPoint = getDominantWindPoint(j.data);
+
         labels = series.labels;
         points = series.points;
 
         chart.data.labels = labels;
         chart.data.datasets[0].data = points;
+        chart.data.datasets[1].data = dominantPoint ? [dominantPoint] : [];
         chart.update();
+        const dominant = calculateDominantWindDirection(j.data);
+        windInfoEl.textContent = dominant == null
+          ? `Επικρατούσα κατεύθυνση ${rangeLabel(val)}: -`
+          : `Επικρατούσα κατεύθυνση ${rangeLabel(val)}: ${dominant}`;
+
       } else {
+        windInfoEl.textContent = `Επικρατούσα κατεύθυνση ${rangeLabel(val)}: -`;
         showInlineError(card, j?.message || 'No data for selected range.');
       }
     } catch (err) {
       card.classList.remove('skeleton');
       console.error('Wind fetch error:', err);
+      windInfoEl.textContent = `Επικρατούσα κατεύθυνση ${rangeLabel(val)}: -`;
       showInlineError(card, `Network/server error: ${String(err.message || err)}`);
     }
   });
@@ -848,7 +1045,30 @@ function buildWindCard({ rows, station, node, large = false }) {
   return { card, chart };
 }
 
+const averageLabelPlugin = {
+  id: 'averageLabel',
+  afterDatasetsDraw(chart) {
+    const { ctx, chartArea: { left, right }, scales: { y } } = chart;
 
+    const avgDataset = chart.data.datasets[1]; // το average dataset
+    if (!avgDataset || !avgDataset.data.length) return;
+
+    const avg = avgDataset.data[0];
+    if (avg == null) return;
+
+    const yPos = y.getPixelForValue(avg);
+
+    ctx.save();
+    ctx.fillStyle = '#ff6b6b';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'bottom';
+
+    const unit = chart.data.datasets[0]?.label?.match(/\((.*?)\)/)?.[1] || '';
+    ctx.fillText(`Avg: ${avg.toFixed(2)} ${unit}`, right - 6, yPos - 4);
+    ctx.restore();
+  }
+};
 
 // ========== Render all cards ==========
 function graphData(rows, station, node) {
@@ -899,7 +1119,7 @@ function calculateAverage(values, field) {
   return sum / filtered.length;
 }
 
-function calculateFieldAverages(rows) {
+/*function calculateFieldAverages(rows) {
   if (!rows || !rows.length) return {};
 
   const fields = Object.keys(rows[0]).filter(k => {
@@ -920,8 +1140,8 @@ function calculateFieldAverages(rows) {
 
   return result;
 }
-
-function renderTimeAverages(allAverages) {
+*/
+/*function renderTimeAverages(allAverages) {
   const container = document.getElementById('averagesSection');
   if (!container) return;
 
@@ -966,8 +1186,8 @@ function renderTimeAverages(allAverages) {
     </div>
   `;
 }
-
-async function loadTimeAverages(station) {
+*/
+/*async function loadTimeAverages(station) {
   const container = document.getElementById('averagesSection');
   if (container) {
     container.innerHTML = `<div class="avg-panel"><p>Loading averages...</p></div>`;
@@ -999,7 +1219,7 @@ async function loadTimeAverages(station) {
         results[range.key] = {};
       }
 
-      console.log('AVERAGES:', range.key, results[range.key]);
+      
 
     }
 
@@ -1011,4 +1231,4 @@ async function loadTimeAverages(station) {
     }
   }
 }
-
+*/
