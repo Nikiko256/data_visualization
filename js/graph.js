@@ -16,7 +16,7 @@ function tickColor() {
 }
 
 function gridColor() {
-  return cssVar('--chart-grid', 'rgba(0,0,0,0.04');
+  return cssVar('--chart-grid', 'rgba(0,0,0,0.04)');
 }
 
 function rangeLabel(value) {
@@ -208,7 +208,7 @@ window.rethemeAllCharts = function rethemeAllCharts() {
   const grid = 'rgba(255,255,255,0.12)';*/
   const text  = r.getPropertyValue('--text').trim() || '#0b1220';
   const ticks = r.getPropertyValue('--chart-ticks').trim() || text;
-  const grid  = r.getPropertyValue('--chart-grid').trim() || 'rgba(0,0,0,04)';
+  const grid  = r.getPropertyValue('--chart-grid').trim() || 'rgba(0,0,0.04)';
 
   const accent = r.getPropertyValue('--accent').trim() || '#6ee7f9';
   const accent2 = r.getPropertyValue('--accent-2').trim() || '#460fec';
