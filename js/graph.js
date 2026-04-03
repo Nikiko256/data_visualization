@@ -838,13 +838,13 @@ function buildWindCard({ rows, station, node, large = false }) {
 
   const select = el('select', 'time-select');
   [
-    ['All time','all'],
     ['Last 24h','24'],
     ['Last 48h','48'],
     ['Last week','168'],
     ['Last month','720'],
     ['Last year','8760'],
     ['Last 5 years','43800'],
+    ['All time','all']
   ].forEach(([lbl, val]) => {
     const opt = document.createElement('option');
     opt.value = val; opt.textContent = lbl;
