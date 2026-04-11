@@ -21,6 +21,25 @@ loadEnv(__DIR__ . '/../.env');
 
 header('Content-Type: application/json');
 
+function resolveStationTable($dbcnx, $s_id){
+    $sid = preg_replace('/[^a-zA-Z0-9_]/', '_', (string)$s_id);
+
+    $candidates = [ 
+        'station_' . $sid, 
+        $sid
+    ];
+
+    foreach ($candidates as $table) {
+        if (!$table) continue;
+        $check = mysqli_query($dbcnx, "SHOW TABLES LIKE '{$table}'");
+        if ($check && mysqli_num_rows($check) > 0) {
+            return $table;
+        }
+    }
+    return null;
+
+}
+
 // Step 1: Read and validate input JSON
 $input = trim(file_get_contents('php://input'));
 if (!$input) {
@@ -85,15 +104,9 @@ try {
     mysqli_stmt_close($stmt);
     $s_id = (string)$s_id;
 
-    // Step 4: Sanitize table name
-    $table = preg_replace('/[^a-zA-Z0-9_]/', '_', $s_id);
-    if ($table === null) {
-        throw new Exception("Failed to sanitize table name");
-    }
+    $table = resolveStationTable($dbcnx, $s_id);
 
-    // Step 5: Ensure the station’s data table exists
-    $check = mysqli_query($dbcnx, "SHOW TABLES LIKE '{$table}'");
-    if (mysqli_num_rows($check) === 0) {
+    if ($table === null) {
         http_response_code(404);
         echo json_encode([
             "status"  => "error",

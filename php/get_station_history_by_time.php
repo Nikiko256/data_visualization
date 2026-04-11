@@ -14,6 +14,25 @@ loadEnv(__DIR__ . '/../.env');
 
 header('Content-Type: application/json; charset=utf-8');
 
+function resolveStationTable($dbcnx, $s_id) {
+    $sid = preg_replace('/[^a-zA-Z0-9_]/', '_', (string)$s_id);
+
+    $candidates = [
+        'station_' . $sid,
+        $sid
+    ];
+
+    foreach ($candidates as $table) {
+        if (!$table) continue;
+        $check = mysqli_query($dbcnx, "SHOW TABLES LIKE '{$table}'");
+        if ($check && mysqli_num_rows($check) > 0) {
+            return $table;
+        }
+    }
+
+    return null;
+}
+
 $input = trim(file_get_contents('php://input'));
 if (!$input) {
     http_response_code(400);
@@ -75,19 +94,13 @@ try {
     }
     mysqli_stmt_close($stmt);
 
-    $s_id = (string)$s_id;
-    $table = preg_replace('/[^a-zA-Z0-9_]/', '_', $s_id);
+    $table = resolveStationTable($dbcnx, $s_id);
 
-    if ($table === null || $table === '') {
-        throw new Exception("Invalid station table name");
-    }
-
-    $check = mysqli_query($dbcnx, "SHOW TABLES LIKE '{$table}'");
-    if (mysqli_num_rows($check) === 0) {
+    if ($table === null) {
         http_response_code(404);
         echo json_encode([
             "status" => "error",
-            "message" => "Data table for station does not exist"
+            "message" => "Data table for station '{$s_name}' does not exist"
         ]);
         exit;
     }

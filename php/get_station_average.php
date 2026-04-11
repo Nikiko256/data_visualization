@@ -63,8 +63,8 @@ try {
     mysqli_stmt_close($stmt);
 
     $s_id = (string)$s_id;
-    $table = preg_replace('/[^a-zA-Z0-9_]/', '_', $s_id);
-
+    $table = 'station_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $s_id);
+    
     if ($table === null || $table === '') {
         throw new Exception("Invalid station table name");
     }

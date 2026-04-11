@@ -1,11 +1,8 @@
 <?php
-// Allow requests from anywhere (you can lock this down to your dev origin
-// if you want: e.g. "http://127.0.0.1:5500" instead of "*")
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 
-// Handle CORS preflight requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
@@ -19,28 +16,39 @@ mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 require_once __DIR__ . '/load_env.php';
 loadEnv(__DIR__ . '/../.env');
 
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 
-// Step 1: Read and validate input JSON
-$input = trim(file_get_contents('php://input'));
-if (!$input) {
-    http_response_code(400);
-    echo json_encode([
-        "status"  => "error",
-        "message" => "Missing JSON payload"
-    ]);
-    exit;
+function resolveStationTable($dbcnx, $s_id) {
+    $sid = preg_replace('/[^a-zA-Z0-9_]/', '_', (string)$s_id);
+
+    $candidates = [
+        'station_' . $sid,
+        $sid
+    ];
+
+    foreach ($candidates as $table) {
+        if (!$table) continue;
+        $check = mysqli_query($dbcnx, "SHOW TABLES LIKE '{$table}'");
+        if ($check && mysqli_num_rows($check) > 0) {
+            return $table;
+        }
+    }
+
+    return null;
 }
 
-$data = json_decode($input, true);
-if (json_last_error() !== JSON_ERROR_NONE
-    || empty($data['s_name'])
-    || empty($data['n_name'])
-) {
+$raw = file_get_contents('php://input');
+$data = json_decode($raw, true);
+
+if (!is_array($data)) {
+    $data = $_POST;
+}
+
+if (empty($data['s_name']) || empty($data['n_name'])) {
     http_response_code(422);
     echo json_encode([
-        "status"  => "error",
-        "message" => "Invalid JSON or missing 's_name' / 'n_name'"
+        "status" => "error",
+        "message" => "Missing s_name or n_name"
     ]);
     exit;
 }
@@ -49,49 +57,41 @@ $s_name = trim($data['s_name']);
 $n_name = trim($data['n_name']);
 
 try {
-    // Step 2: Connect to the database
-    $host = $_ENV['DB_HOST'];
-    $db   = $_ENV['DB_NAME'];
-    $user = $_ENV['DB_USER'];
-    $pass = $_ENV['DB_PASS'];
-    $dbcnx = mysqli_connect($host, $user, $pass, $db);
+    $dbcnx = mysqli_connect(
+        $_ENV['DB_HOST'],
+        $_ENV['DB_USER'],
+        $_ENV['DB_PASS'],
+        $_ENV['DB_NAME']
+    );
+    mysqli_set_charset($dbcnx, 'utf8mb4');
 
-    // Step 3: Lookup s_id from stations
     $stmt = mysqli_prepare($dbcnx, "SELECT s_id FROM stations WHERE s_name = ?");
     mysqli_stmt_bind_param($stmt, 's', $s_name);
     mysqli_stmt_execute($stmt);
-    $s_id = null;
     mysqli_stmt_bind_result($stmt, $s_id);
+
     if (!mysqli_stmt_fetch($stmt)) {
         mysqli_stmt_close($stmt);
         http_response_code(404);
         echo json_encode([
-            "status"  => "error",
+            "status" => "error",
             "message" => "Station not found"
         ]);
         exit;
     }
     mysqli_stmt_close($stmt);
-    $s_id = (string)$s_id;
 
-    // Step 4: Sanitize table name
-    $table = preg_replace('/[^a-zA-Z0-9_]/', '_', $s_id);
+    $table = resolveStationTable($dbcnx, $s_id);
+
     if ($table === null) {
-        throw new Exception("Failed to sanitize table name");
-    }
-
-    // Step 5: Ensure the station’s data table exists
-    $check = mysqli_query($dbcnx, "SHOW TABLES LIKE '{$table}'");
-    if (mysqli_num_rows($check) === 0) {
         http_response_code(404);
         echo json_encode([
-            "status"  => "error",
+            "status" => "error",
             "message" => "Data table for station '{$s_name}' does not exist"
         ]);
         exit;
     }
 
-    // Step 6: Fetch all rows for that node
     $query = "
         SELECT
             n_name,
@@ -108,6 +108,7 @@ try {
         WHERE n_name = ?
         ORDER BY created_at ASC
     ";
+
     $stmt = mysqli_prepare($dbcnx, $query);
     mysqli_stmt_bind_param($stmt, 's', $n_name);
     mysqli_stmt_execute($stmt);
@@ -115,25 +116,36 @@ try {
 
     $rows = [];
     while ($row = mysqli_fetch_assoc($result)) {
-        $rows[] = $row;
+        $rows[] = [
+            "n_name" => $row['n_name'],
+            "soilTemp" => $row['soilTemp'] !== null ? (float)$row['soilTemp'] : null,
+            "soilMoist" => $row['soilMoist'] !== null ? (float)$row['soilMoist'] : null,
+            "airTemp" => $row['airTemp'] !== null ? (float)$row['airTemp'] : null,
+            "airHumid" => $row['airHumid'] !== null ? (float)$row['airHumid'] : null,
+            "airPress" => $row['airPress'] !== null ? (float)$row['airPress'] : null,
+            "rainDepth" => $row['rainDepth'] !== null ? (float)$row['rainDepth'] : null,
+            "windSpeed" => $row['windSpeed'] !== null ? (float)$row['windSpeed'] : null,
+            "windDirection" => $row['windDirection'],
+            "created_at" => $row['created_at']
+        ];
     }
     mysqli_stmt_close($stmt);
 
-    // Step 7: Return JSON response
     echo json_encode([
-        "status"  => "success",
-        "s_id"    => $s_id,
-        "s_name"  => $s_name,
-        "n_name"  => $n_name,
-        "data"    => $rows
+        "status" => "success",
+        "s_name" => $s_name,
+        "s_id" => $s_id,
+        "table" => $table,
+        "n_name" => $n_name,
+        "data" => $rows
     ]);
 
     mysqli_close($dbcnx);
 
-} catch (Exception $e) {
+} catch (Throwable $e) {
     http_response_code(500);
     echo json_encode([
-        "status"  => "error",
+        "status" => "error",
         "message" => $e->getMessage()
     ]);
 }

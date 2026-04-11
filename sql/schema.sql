@@ -86,3 +86,11 @@ CREATE TABLE IF NOT EXISTS station_nodes (
   is_active TINYINT(1) NOT NULL DEFAULT 1,
   UNIQUE KEY uq_station_node (s_id, n_name)
 );
+
+CREATE TABLE station_nodes (
+  s_id VARCHAR(50) NOT NULL,
+  n_name VARCHAR(50) NOT NULL,
+  display_name VARCHAR(100) DEFAULT NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (s_id, n_name)
+);

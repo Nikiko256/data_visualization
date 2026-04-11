@@ -983,3 +983,68 @@ select:focus-visible{
   font-weight: 600;
 }
 
+/* =======================
+   Node section additions
+   ======================= */
+
+#nodeControlsSection{
+  padding: clamp(12px, 2vw, 20px);
+  border-top: 1px solid var(--white-10);
+  border-bottom: 1px solid var(--white-10);
+  background: linear-gradient(180deg, var(--white-04), var(--white-00));
+}
+
+#nodeControlsSection .chart-head{
+  margin: 0;
+}
+
+#nodeDataSection{
+  min-height: 120px;
+}
+
+#selectedNodeLabel{
+  font-size: 0.92rem;
+  color: var(--muted);
+  line-height: 1.3;
+}
+
+/* fallback αν για κάποιο λόγο φανεί το native select */
+#nodeSelect{
+  min-width: 180px;
+}
+
+/* node empty / error states */
+#nodeDataSection .empty,
+#nodeDataSection .error{
+  padding: 20px;
+  border-radius: 14px;
+  background: var(--white-06);
+  border: 1px solid var(--white-10);
+  box-shadow: var(--shadow-sm);
+  color: var(--muted);
+}
+
+/* καλύτερο spacing μεταξύ station charts και node area */
+#dataSection{
+  border-bottom: 1px solid var(--white-08);
+}
+
+/* mobile */
+@media (max-width: 768px){
+  #nodeControlsSection .chart-head{
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  #nodeControlsSection .chart-title-wrap{
+    margin-bottom: 6px;
+  }
+
+  #nodeSelect,
+  #nodeControlsSection .dd,
+  #nodeControlsSection .dd__btn--node{
+    width: 100%;
+    min-width: 0;
+  }
+}
+

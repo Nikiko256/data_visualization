@@ -3,6 +3,44 @@
 
   function getInitialTheme() {
     const saved = localStorage.getItem(key);
+    return saved === "light" ? "light" : "dark";
+  }
+
+  function apply(theme) {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem(key, theme);
+
+    const btn = document.getElementById("themeToggle");
+    if (btn) btn.textContent = theme === "light" ? "☀️" : "🌙";
+
+    if (window.rethemeAllCharts) window.rethemeAllCharts();
+  }
+
+  apply(getInitialTheme());
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const btn = document.getElementById("themeToggle");
+    if (!btn) return;
+
+    btn.textContent = document.documentElement.dataset.theme === "light" ? "☀️" : "🌙";
+
+    btn.addEventListener("click", () => {
+      const cur = document.documentElement.dataset.theme;
+      apply(cur === "light" ? "dark" : "light");
+    });
+  });
+})();
+
+
+
+
+
+
+/*(function () {
+  const key = "theme";
+
+  function getInitialTheme() {
+    const saved = localStorage.getItem(key);
     return saved === "light" ? "light" : "dark";;
   }
 
@@ -34,4 +72,4 @@
       apply(cur === "light" ? "dark" : "light");
     });
   });
-})();
+})();*/

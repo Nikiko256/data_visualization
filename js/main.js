@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(res => res.json())
     .then(data => {
       if (data.status === 'success') {
-        stations = data.stations;
+        stations = Array.isArray(data.stations) ? data.stations : [];
         renderList(stations);
       } else {
         listEl.innerHTML = '<li class="station-item">Failed to load stations</li>';
@@ -38,27 +38,54 @@ document.addEventListener('DOMContentLoaded', () => {
       hidePageLoader();
     });
 
+  function normalizeStation(item) {
+    if (typeof item === 'string') {
+      return {
+        s_id: item,
+        s_name: item
+      };
+    }
+
+    return {
+      s_id: item.s_id,
+      s_name: item.s_name || `Station ${item.s_id}`
+    };
+  }
+
   function renderList(items) {
     listEl.innerHTML = '';
+
     if (!items.length) {
       listEl.innerHTML = '<li class="station-item">No stations found</li>';
       return;
     }
 
-    items.forEach(name => {
+    items.forEach(rawItem => {
+      const station = normalizeStation(rawItem);
+
       const li = document.createElement('li');
       li.className = 'station-item';
-      li.textContent = name;
+      li.textContent = station.s_name;
+
       li.addEventListener('click', () => {
-        window.location.href = `station.html?s_name=${encodeURIComponent(name)}`;
-      });
+    window.location.href = `station.html?s_name=${encodeURIComponent(station.s_name)}`;
+    });
+
       listEl.appendChild(li);
     });
   }
 
   searchInput.addEventListener('input', () => {
     const query = searchInput.value.toLowerCase();
-    const filtered = stations.filter(name => name.toLowerCase().includes(query));
+
+    const filtered = stations.filter(rawItem => {
+      const station = normalizeStation(rawItem);
+      return (
+        String(station.s_name).toLowerCase().includes(query) ||
+        String(station.s_id).toLowerCase().includes(query)
+      );
+    });
+
     renderList(filtered);
   });
 });
@@ -66,16 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('pointermove', e => {
   const t = e.target.closest('.station-item');
   if (!t) return;
-  const r = t.getBoundingClientRect();
-  t.style.setProperty('--mx', (e.clientX - r.left) + 'px');
-  t.style.setProperty('--my', (e.clientY - r.top) + 'px');
-});
-
-
-    // enhance the hover glow effect
-    document.addEventListener('pointermove', e => {
-  const t = e.target.closest('.station-item');
-  if(!t) return;
   const r = t.getBoundingClientRect();
   t.style.setProperty('--mx', (e.clientX - r.left) + 'px');
   t.style.setProperty('--my', (e.clientY - r.top) + 'px');

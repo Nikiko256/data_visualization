@@ -7,6 +7,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 require_once __DIR__ . '/load_env.php';
@@ -14,22 +18,37 @@ loadEnv(__DIR__ . '/../.env');
 
 header('Content-Type: application/json; charset=utf-8');
 
-$input = trim(file_get_contents('php://input'));
-if (!$input) {
-    http_response_code(400);
-    echo json_encode([
-        "status" => "error",
-        "message" => "Missing JSON payload"
-    ]);
-    exit;
+function resolveStationTable($dbcnx, $s_id) {
+    $sid = preg_replace('/[^a-zA-Z0-9_]/', '_', (string)$s_id);
+
+    $candidates = [
+        'station_' . $sid,
+        $sid
+    ];
+
+    foreach ($candidates as $table) {
+        if (!$table) continue;
+        $check = mysqli_query($dbcnx, "SHOW TABLES LIKE '{$table}'");
+        if ($check && mysqli_num_rows($check) > 0) {
+            return $table;
+        }
+    }
+
+    return null;
 }
 
-$data = json_decode($input, true);
-if (json_last_error() !== JSON_ERROR_NONE || empty($data['s_name'])) {
+$raw = file_get_contents('php://input');
+$data = json_decode($raw, true);
+
+if (!is_array($data)) {
+    $data = $_POST;
+}
+
+if (empty($data['s_name'])) {
     http_response_code(422);
     echo json_encode([
         "status" => "error",
-        "message" => "Invalid JSON or missing 's_name'"
+        "message" => "Missing s_name"
     ]);
     exit;
 }
@@ -61,19 +80,13 @@ try {
     }
     mysqli_stmt_close($stmt);
 
-    $s_id = (string)$s_id;
-    $table = preg_replace('/[^a-zA-Z0-9_]/', '_', $s_id);
+    $table = resolveStationTable($dbcnx, $s_id);
 
-    if ($table === null || $table === '') {
-        throw new Exception("Invalid station table name");
-    }
-
-    $check = mysqli_query($dbcnx, "SHOW TABLES LIKE '{$table}'");
-    if (mysqli_num_rows($check) === 0) {
+    if ($table === null) {
         http_response_code(404);
         echo json_encode([
             "status" => "error",
-            "message" => "Data table for station does not exist"
+            "message" => "Data table for station '{$s_name}' does not exist"
         ]);
         exit;
     }
@@ -130,6 +143,7 @@ try {
         mysqli_stmt_bind_param($windStmt, 's', $bucketTime);
         mysqli_stmt_execute($windStmt);
         mysqli_stmt_bind_result($windStmt, $windDirection);
+
         $dominantWind = null;
         if (mysqli_stmt_fetch($windStmt)) {
             $dominantWind = $windDirection;
@@ -153,6 +167,7 @@ try {
         "status" => "success",
         "s_name" => $s_name,
         "s_id" => $s_id,
+        "table" => $table,
         "data" => $rows
     ]);
 

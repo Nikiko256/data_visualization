@@ -12,7 +12,8 @@ async function postJSON(url, payload){
   });
   const text = await r.text();
   let j;
-  try { j = JSON.parse(text); } catch { throw new Error(`Non-JSON ${r.status}: ${text.slice(0,200)}`); }
+  try { j = JSON.parse(text); }
+  catch { throw new Error(`Non-JSON ${r.status}: ${text.slice(0,200)}`); }
   if (!r.ok) throw new Error(j?.message || `HTTP ${r.status}`);
   return j;
 }
@@ -21,45 +22,50 @@ async function getJSON(url){
   const r = await fetch(url, { cache: 'no-store' });
   const text = await r.text();
   let j;
-  try { j = JSON.parse(text); } catch { throw new Error(`Non-JSON ${r.status}: ${text.slice(0,200)}`); }
+  try { j = JSON.parse(text); }
+  catch { throw new Error(`Non-JSON ${r.status}: ${text.slice(0,200)}`); }
   if (!r.ok) throw new Error(j?.message || `HTTP ${r.status}`);
   return j;
 }
 
-// ---- CONFIG: put YOUR endpoints here ----
 const API = {
-  stations_list:   '../php/admin/stations_list.php',   // you may not have it -> use your own list endpoint if named differently
+  stations_list:   '../php/admin/stations_list.php',
   stations_create: '../php/admin/stations_create.php',
   stations_update: '../php/admin/stations_update.php',
   stations_delete: '../php/admin/stations_delete.php',
 
-  //pending_list: '../php/admin/pending_list.php',
-  //pending_mark: '../php/admin/pending_mark_seen.php',
-
+  nodes_list:      '../php/admin/nodes_list.php',
+  nodes_create:    '../php/admin/nodes_create.php',
+  nodes_update:    '../php/admin/nodes_update.php',
+  nodes_delete:    '../php/admin/nodes_delete.php',
+  nodes_set_active:'../php/admin/nodes_set_active.php',
 };
 
-// Data caches
 let STATIONS = [];
+let NODES = [];
 
-function showStations(){
-  document.getElementById('panelStations').style.display = 'block';
-  document.getElementById('tabStations').classList.add('is-active');
-}
-
-/*function setTab(which){
+function setTab(which){
   const stBtn = document.getElementById('tabStations');
   const ndBtn = document.getElementById('tabNodes');
-  document.getElementById('panelStations').style.display = which === 'stations' ? 'block' : 'none';
-  document.getElementById('panelNodes').style.display    = which === 'nodes' ? 'block' : 'none';
+  const stPanel = document.getElementById('panelStations');
+  const ndPanel = document.getElementById('panelNodes');
+
+  if (!stBtn || !ndBtn || !stPanel || !ndPanel) return;
+
+  stPanel.style.display = which === 'stations' ? 'block' : 'none';
+  ndPanel.style.display = which === 'nodes' ? 'block' : 'none';
+
   stBtn.classList.toggle('is-active', which === 'stations');
   ndBtn.classList.toggle('is-active', which === 'nodes');
-} */
+}
 
 function renderStations(filter=''){
   const tb = document.getElementById('stationsTbody');
   const q = filter.trim().toLowerCase();
 
-  const rows = STATIONS.filter(s => (`${s.s_id} ${s.s_name}`).toLowerCase().includes(q));
+  const rows = STATIONS.filter(s =>
+    `${s.s_id} ${s.s_name}`.toLowerCase().includes(q)
+  );
 
   tb.innerHTML = rows.map(s => `
     <tr style="border-top:1px solid var(--white-10);">
@@ -76,17 +82,23 @@ function renderStations(filter=''){
   `).join('');
 }
 
-function refillStationsSelect(){
+function refillStationsSelect(selected = ''){
   const sel = document.getElementById('nodeCreateStation');
-  sel.innerHTML = STATIONS.map(s => `<option value="${esc(s.s_id)}">${esc(s.s_name)} (${esc(s.s_id)})</option>`).join('');
+  if (!sel) return;
+
+  sel.innerHTML = STATIONS.map(s => `
+    <option value="${esc(s.s_id)}" ${s.s_id === selected ? 'selected' : ''}>
+      ${esc(s.s_name)} (${esc(s.s_id)})
+    </option>
+  `).join('');
 }
 
 function renderNodes(filter=''){
   const tb = document.getElementById('nodesTbody');
-  const q = filter.trim().toLowerCase(); 
+  const q = filter.trim().toLowerCase();
 
   const rows = NODES.filter(n => {
-    const hay = `${n.id} ${n.s_id} ${n.n_name} ${n.display_name||''} ${n.is_active}`.toLowerCase();
+    const hay = `${n.id} ${n.s_id} ${n.n_name} ${n.display_name || ''} ${n.is_active}`.toLowerCase();
     return hay.includes(q);
   });
 
@@ -118,39 +130,59 @@ function renderNodes(filter=''){
   }).join('');
 }
 
-
 async function reloadAll(){
+  const currentSelectedStation = document.getElementById('nodeCreateStation')?.value || '';
+
   const st = await getJSON(API.stations_list);
   STATIONS = st.data || st.stations || [];
-  renderStations(document.getElementById('stSearch').value || '');
+
+  const nd = await getJSON(API.nodes_list);
+  NODES = nd.data || nd.nodes || [];
+
+  renderStations(document.getElementById('stSearch')?.value || '');
+  refillStationsSelect(currentSelectedStation);
+  renderNodes(document.getElementById('nodeSearch')?.value || '');
 }
 
-
-
 document.addEventListener('DOMContentLoaded', async () => {
-  //await reloadPending();
-  //setInterval(() => reloadPending().catch(console.error), 15000);
-  showStations();
+  setTab('stations');
 
-  document.getElementById('tabStations')
-    .addEventListener('click', showStations);
+  document.getElementById('tabStations')?.addEventListener('click', () => setTab('stations'));
+  document.getElementById('tabNodes')?.addEventListener('click', () => setTab('nodes'));
 
-  document.getElementById('stSearch')
-    .addEventListener('input', e => renderStations(e.target.value));
+  document.getElementById('stSearch')?.addEventListener('input', e => renderStations(e.target.value));
+  document.getElementById('nodeSearch')?.addEventListener('input', e => renderNodes(e.target.value));
 
-  document.getElementById('btnCreateStation').addEventListener('click', async () => {
+  document.getElementById('btnCreateStation')?.addEventListener('click', async () => {
     const s_id = document.getElementById('stCreateId').value.trim();
     const s_name = document.getElementById('stCreateName').value.trim();
+
     if (!s_id || !s_name) return alert('Fill s_id and s_name');
 
     await postJSON(API.stations_create, { s_id, s_name });
 
     document.getElementById('stCreateId').value = '';
     document.getElementById('stCreateName').value = '';
+
     await reloadAll();
   });
 
-  // keep only station actions
+  document.getElementById('btnCreateNode')?.addEventListener('click', async () => {
+    const s_id = document.getElementById('nodeCreateStation').value;
+    const n_name = document.getElementById('nodeCreateName').value.trim();
+    const display_name = document.getElementById('nodeCreateDisplay').value.trim();
+
+    if (!s_id || !n_name) return alert('Fill station and n_name');
+
+    await postJSON(API.nodes_create, { s_id, n_name, display_name });
+
+    document.getElementById('nodeCreateName').value = '';
+    document.getElementById('nodeCreateDisplay').value = '';
+
+    await reloadAll();
+    setTab('nodes');
+  });
+
   document.body.addEventListener('click', async (e) => {
     const btn = e.target.closest('button[data-act]');
     if (!btn) return;
@@ -163,7 +195,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const s_name = input.value.trim();
       await postJSON(API.stations_update, { s_id, s_name });
       await reloadAll();
-      alert('Saved.');
+      return;
     }
 
     if (act === 'st-del') {
@@ -171,76 +203,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!confirm(`Delete station ${s_id}?`)) return;
       await postJSON(API.stations_delete, { s_id });
       await reloadAll();
-    }
-
-    /*if (act === 'pending-seen') {
-      const s_id = btn.dataset.sid; // από data-sid
-      await postJSON(API.pending_mark, { s_id });
-      await reloadPending();
-    } */
-
-  });
-
-  try {
-    await reloadAll();
-  } catch (err) {
-    console.error(err);
-    alert('Admin API error: ' + (err.message || err));
-  }
-});
-
-
-
-/*document.addEventListener('DOMContentLoaded', async () => {
-  setTab('stations');
-
-  document.getElementById('tabStations').addEventListener('click', () => setTab('stations'));
-  document.getElementById('tabNodes').addEventListener('click', () => setTab('nodes'));
-
-  document.getElementById('stSearch').addEventListener('input', e => renderStations(e.target.value));
-  document.getElementById('nodeSearch').addEventListener('input', e => renderNodes(e.target.value));
-
-  document.getElementById('btnCreateStation').addEventListener('click', async () => {
-    const s_id = document.getElementById('stCreateId').value.trim();
-    const s_name = document.getElementById('stCreateName').value.trim();
-    if (!s_id || !s_name) return alert('Fill s_id and s_name');
-    await postJSON(API.stations_create, { s_id, s_name });
-    document.getElementById('stCreateId').value = '';
-    document.getElementById('stCreateName').value = '';
-    await reloadAll();
-  });
-
-  document.getElementById('btnCreateNode').addEventListener('click', async () => {
-    const s_id = document.getElementById('nodeCreateStation').value;
-    const n_name = document.getElementById('nodeCreateName').value.trim();
-    const display_name = document.getElementById('nodeCreateDisplay').value.trim();
-    if (!s_id || !n_name) return alert('Fill station and n_name');
-    await postJSON(API.nodes_create, { s_id, n_name, display_name });
-    document.getElementById('nodeCreateName').value = '';
-    document.getElementById('nodeCreateDisplay').value = '';
-    await reloadAll();
-  });
-
-  document.body.addEventListener('click', async (e) => {
-    const btn = e.target.closest('button[data-act]');
-    if (!btn) return;
-
-    const act = btn.dataset.act;
-
-    if (act === 'st-save') {
-      const s_id = btn.dataset.sid;
-      const input = document.querySelector(`input[data-st-id="${CSS.escape(s_id)}"]`);
-      const s_name = input.value.trim();
-      await postJSON(API.stations_update, { s_id, s_name });
-      await reloadAll();
-      alert('Saved.');
-    }
-
-    if (act === 'st-del') {
-      const s_id = btn.dataset.sid;
-      if (!confirm(`Delete station ${s_id}? (Also deletes node metadata)`)) return;
-      await postJSON(API.stations_delete, { s_id });
-      await reloadAll();
+      return;
     }
 
     if (act === 'node-save') {
@@ -249,14 +212,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       const display_name = input.value.trim();
       await postJSON(API.nodes_update, { id, display_name });
       await reloadAll();
-      alert('Saved.');
+      return;
     }
 
     if (act === 'node-del') {
       const id = Number(btn.dataset.nodeId);
-      if (!confirm(`Delete node metadata #${id}?`)) return;
+      if (!confirm(`Delete node #${id}?`)) return;
       await postJSON(API.nodes_delete, { id });
       await reloadAll();
+      return;
     }
   });
 
@@ -276,80 +240,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error(err);
     alert('Admin API error: ' + (err.message || err));
   }
-}); */
-
-
-
-
-//REMOVING NOTIFICATIONS
-
-//stations list
-/*fetch('../php/admin/stations_list.php', { cache: 'no-store' })
-  .then(r => r.text().then(t => ({ ok:r.ok, status:r.status, text:t })))
-  .then(x => { console.log(x); try { console.log("JSON:", JSON.parse(x.text)); } catch(e) { console.error("NOT JSON", e); }});
-
-//stations create
-fetch('/php/admin/stations_create.php', {
-  method: 'POST',
-  headers: {'Content-Type':'application/json'},
-  body: JSON.stringify({ s_id: 'TEST_ST_001', s_name: 'Test Station' })
-})
-.then(async r => ({status:r.status, ok:r.ok, text: await r.text()}))
-.then(x => { console.log(x); try { console.log(JSON.parse(x.text)); } catch(e) { console.log("NOT JSON:", x.text); }});
-
-//stations update
-
-fetch('/php/admin/stations_update.php', {
-  method: 'POST',
-  headers: {'Content-Type':'application/json'},
-  body: JSON.stringify({ s_id: 'TEST_ST_001', s_name: 'Renamed Station' })
-})
-.then(async r => ({status:r.status, ok:r.ok, text: await r.text()}))
-.then(x => { console.log(x); try { console.log(JSON.parse(x.text)); } catch(e) { console.log("NOT JSON:", x.text); }});
-
-
-//stations delete
-
-fetch('/php/admin/stations_delete.php', {
-  method: 'POST',
-  headers: {'Content-Type':'application/json'},
-  body: JSON.stringify({ s_id: 'TEST_ST_001' })
-})
-.then(async r => ({status:r.status, ok:r.ok, text: await r.text()}))
-.then(x => { console.log(x); try { console.log(JSON.parse(x.text)); } catch(e) { console.log("NOT JSON:", x.text); }});
-
-
-//let PENDING = [];
-
-/*function renderPending(){
-  const unseen = PENDING.filter(p => String(p.seen) === '0');
-  const badge = document.getElementById('pendingBadge');
-  const box = document.getElementById('pendingBox');
-  const tb = document.getElementById('pendingTbody');
-
-  if (unseen.length === 0){
-    badge.style.display = 'none';
-    box.style.display = 'none';
-    return;
-  }
-
-  badge.textContent = String(unseen.length);
-  badge.style.display = 'inline-block';
-  box.style.display = 'block';
-
-  tb.innerHTML = unseen.map(p => `
-    <tr style="border-top:1px solid var(--white-10);">
-      <td style="padding:10px; color:var(--muted);">${esc(p.s_id)}</td>
-      <td style="padding:10px; color:var(--muted);">${esc(p.last_seen)}</td>
-      <td style="padding:10px; white-space:nowrap;">
-        <button class="btn" data-act="pending-seen" data-sid="${esc(p.s_id)}">Mark seen</button>
-      </td>
-    </tr>
-  `).join('');
-} */
-
-/*async function reloadPending(){
-  const p = await getJSON(API.pending_list);
-  PENDING = p.data || [];
-  renderPending();
-} */
+});

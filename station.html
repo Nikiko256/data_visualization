@@ -7,16 +7,16 @@
   <link rel="stylesheet" href="css/main.css">
 
   <script>
-  (function () {
-    const saved = localStorage.getItem("theme");
-    document.documentElement.dataset.theme = saved === "light" ? "light" : "dark";
-  })();
+    (function () {
+      const saved = localStorage.getItem("theme");
+      document.documentElement.dataset.theme = saved === "light" ? "light" : "dark";
+    })();
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
-  <script src="js/graph.js" defer></script>
-  <script src="js/station.js" defer></script>
-  <script src="js/theme.js" defer></script>
+  <script src="js/graph.js?v=4" defer></script>
+  <script src="js/station.js?v=4" defer></script>
+  <script src="js/theme.js?v=4" defer></script>
 </head>
 <body>
   <div id="pageLoader" class="page-loader" aria-hidden="false">
@@ -25,6 +25,7 @@
       <div class="page-loader__text">Loading station data...</div>
     </div>
   </div>
+
   <div class="container">
     <header class="topbar">
       <div></div>
@@ -32,8 +33,16 @@
       <button class="btn" id="themeToggle" type="button" aria-label="Toggle theme">🌙</button>
     </header>
 
-    <section id="averagesSection" class="averages-container"></section>
-    <section id="dataSection" class="charts-container"></section>
+    <section id="nodeControlsSection" class="controls">
+      <label for="nodeSelect">Choose a node:</label>
+      <div>
+        <select id="nodeSelect" class="time-select">
+          <option value="">Select node</option>
+        </select>
+      </div>
+    </section>
+
+    <section id="nodeDataSection" class="charts-container"></section>
   </div>
 
   <div id="chartModal" class="modal" aria-hidden="true">
@@ -47,5 +56,3 @@
   </div>
 </body>
 </html>
-
-

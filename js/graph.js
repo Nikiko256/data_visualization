@@ -77,50 +77,6 @@ function calculateDominantWindDirection(rows) {
   return bestDir;
 }
 
-function calculateDominantWindDirection(rows) {
-  const stats = new Map();
-
-  rows.forEach((r) => {
-    const deg = parseWindValue(r?.windDirection);
-    if (deg == null) return;
-
-    const dir = dirFromDeg(deg);
-    if (!dir) return;
-
-    const key = dir.abbr;
-    const time = r?.created_at ? new Date(r.created_at).getTime() : -1;
-
-    if (!stats.has(key)) {
-      stats.set(key, { count: 0, latestTime: -1 });
-    }
-
-    const entry = stats.get(key);
-    entry.count += 1;
-
-    if (time > entry.latestTime) {
-      entry.latestTime = time;
-    }
-  });
-
-  if (!stats.size) return null;
-
-  let bestDir = null;
-  let bestCount = -1;
-  let bestLatestTime = -1;
-
-  for (const [dir, info] of stats.entries()) {
-    if (
-      info.count > bestCount ||
-      (info.count === bestCount && info.latestTime > bestLatestTime)
-    ) {
-      bestDir = dir;
-      bestCount = info.count;
-      bestLatestTime = info.latestTime;
-    }
-  }
-
-  return bestDir;
-}
 
 function getDominantWindPoint(rows) {
   const dominantDir = calculateDominantWindDirection(rows);
@@ -408,32 +364,42 @@ window.upgradeToDropdown = function upgradeToDropdown(select, { variant = 'time'
     });
   }
 
-  function positionMenu() {
-    const r = btn.getBoundingClientRect();
-    menu.style.minWidth = `${r.width}px`;
-    menu.style.left = `${Math.round(r.left)}px`;
-    // show to measure height
-    menu.style.display = 'block';
-    const h = menu.offsetHeight;
-    const below = r.bottom + 6 + h <= window.innerHeight - 8;
-    menu.style.top = below ? `${Math.round(r.bottom + 6)}px` : `${Math.round(r.top - 6 - h)}px`;
-  }
+function positionMenu() {
+  if (!btn || !document.body.contains(btn)) return;
 
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (open) return closeAll();
-    buildMenu();
-    positionMenu();
-    open = true;
-    wrap.classList.add('dd--open');
-    btn.setAttribute('aria-expanded', 'true');
-    setTimeout(() => {
-      document.addEventListener('click', onDocClick, true);
-      window.addEventListener('scroll', closeAll, { passive: true });
-      window.addEventListener('resize', closeAll);
-      document.addEventListener('keydown', onKey);
-    }, 0);
-  });
+  const r = btn.getBoundingClientRect();
+  if (!r) return;
+
+  menu.style.minWidth = `${r.width}px`;
+  menu.style.left = `${Math.round(r.left)}px`;
+  menu.style.display = 'block';
+
+  const h = menu.offsetHeight;
+  const below = r.bottom + 6 + h <= window.innerHeight - 8;
+  menu.style.top = below
+    ? `${Math.round(r.bottom + 6)}px`
+    : `${Math.round(r.top - 6 - h)}px`;
+}
+
+btn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (open) return closeAll();
+
+  buildMenu();
+  menu.style.display = 'block';
+  positionMenu();
+
+  open = true;
+  wrap.classList.add('dd--open');
+  btn.setAttribute('aria-expanded', 'true');
+
+  setTimeout(() => {
+    document.addEventListener('click', onDocClick, true);
+    window.addEventListener('scroll', closeAll, { passive: true });
+    window.addEventListener('resize', closeAll);
+    document.addEventListener('keydown', onKey);
+  }, 0);
+});
 
   // keep button text synced if value set programmatically
   select.addEventListener('change', () => {
@@ -1049,15 +1015,20 @@ function buildWindCard({ rows, station, node, large = false }) {
 const averageLabelPlugin = {
   id: 'averageLabel',
   afterDatasetsDraw(chart) {
-    const { ctx, chartArea: { left, right }, scales: { y } } = chart;
+    const ctx = chart.ctx;
+    const chartArea = chart.chartArea;
+    const y = chart.scales?.y;
 
-    const avgDataset = chart.data.datasets[1]; // το average dataset
-    if (!avgDataset || !avgDataset.data.length) return;
+    if (!ctx || !chartArea || !y) return;
+
+    const avgDataset = chart.data.datasets[1];
+    if (!avgDataset || !avgDataset.data || !avgDataset.data.length) return;
 
     const avg = avgDataset.data[0];
-    if (avg == null) return;
+    if (avg == null || !Number.isFinite(avg)) return;
 
     const yPos = y.getPixelForValue(avg);
+    if (!Number.isFinite(yPos)) return;
 
     ctx.save();
     ctx.fillStyle = '#ff6b6b';
@@ -1066,14 +1037,15 @@ const averageLabelPlugin = {
     ctx.textBaseline = 'bottom';
 
     const unit = chart.data.datasets[0]?.label?.match(/\((.*?)\)/)?.[1] || '';
-    ctx.fillText(`Avg: ${avg.toFixed(2)} ${unit}`, right - 6, yPos - 4);
+    ctx.fillText(`Avg: ${avg.toFixed(2)} ${unit}`, chartArea.right - 6, yPos - 4);
     ctx.restore();
   }
 };
 
-// ========== Render all cards ==========
-function graphData(rows, station, node) {
-  const container = document.getElementById('dataSection');
+function graphData(rows, station, node, containerId = 'nodeDataSection') {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
   container.innerHTML = '';
 
   if (!rows || rows.length === 0) {
@@ -1081,31 +1053,29 @@ function graphData(rows, station, node) {
     return;
   }
 
-  // Which keys are numeric (skip windDirection)
   const keys = Object.keys(rows[0] || {});
   const numericFields = keys.filter(k => {
     if (k === 'n_name' || k === 'windDirection' || k === 'created_at') return false;
     return rows.some(r => Number.isFinite(parseFloat(r[k])));
   });
 
-  // Charts
   numericFields.forEach(field => {
     const { card } = buildChartCard({ field, rows, station, node, large: false });
     container.appendChild(card);
   });
 
-  // Wind Direction card (if present at all)
   const hasWind = rows.some(r => r && r.windDirection != null && String(r.windDirection).trim() !== '');
   if (hasWind) {
     const { card } = buildWindCard({ rows, station, node, large: false });
     container.appendChild(card);
   }
 }
-// Auto-upgrade the top node select after DOM is ready
+
+/* Auto-upgrade the top node select after DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   const ns = document.getElementById('nodeSelect');
   if (ns) window.upgradeToDropdown(ns, { variant: 'node' });
-});
+}); */
 
 function calculateAverage(values, field) {
   let filtered = values.filter(v => Number.isFinite(v));

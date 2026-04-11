@@ -64,7 +64,7 @@ try {
     $s_id = (string)$s_id;
 
     // Step 4: Sanitize table name
-    $table = preg_replace('/[^a-zA-Z0-9_]/', '_', $s_id);
+    $table = 'station_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $s_id);
     if ($table === null) {
         throw new Exception("Failed to sanitize table name");
     }
