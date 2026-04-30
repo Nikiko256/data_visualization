@@ -187,8 +187,11 @@ window.rethemeAllCharts = function rethemeAllCharts() {
   // Gradients
   window.makeLineGradient = (ctx) => {
     const g = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
-    g.addColorStop(0, accent);
-    g.addColorStop(1, accent2);
+    /*g.addColorStop(0, accent);
+    g.addColorStop(1, accent2);*/
+
+    g.addColorStop(0, 'rgb(61, 173, 190)');
+    g.addColorStop(1, 'rgb(122, 88, 223)');
     return g;
   };
   window.makeFillGradient = (ctx) => {
@@ -638,7 +641,7 @@ function buildChartCard({ field, rows, station, node, large = false }) {
         data: new Array(values.length).fill(initialAverage),
         borderWidth: 2,
         borderDash: [6, 6],
-        borderColor: '#ff6b6b',
+        borderColor: '#f89a03',
         pointRadius: 0,
         pointHoverRadius: 0,
         fill: false,
@@ -897,7 +900,7 @@ function buildWindCard({ rows, station, node, large = false }) {
         fill: false,
         pointRadius: 7,
         pointHoverRadius: 9,
-        pointBackgroundColor: '#ff6b6b',
+        pointBackgroundColor: '#f89a03',
         pointBorderColor: '#ffffff',
         pointBorderWidth: 2,
       }
@@ -1031,7 +1034,7 @@ const averageLabelPlugin = {
     if (!Number.isFinite(yPos)) return;
 
     ctx.save();
-    ctx.fillStyle = '#ff6b6b';
+    ctx.fillStyle = '#f89a03';
     ctx.font = '12px sans-serif';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'bottom';

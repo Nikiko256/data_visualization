@@ -1,117 +1,235 @@
-/* admin/admin.css */
-
-/* page padding already comes from body in main.css */
-
-/* Tabs */
-.admin-tabs{
-  display:flex;
-  gap:10px;
-  justify-content:center;
-  flex-wrap:wrap;
+.admin-tabs {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
-.admin-tabs .btn{
-  opacity:.85;
+
+.admin-tabs .btn {
+  opacity: .85;
 }
-.admin-tabs .btn.is-active{
-  opacity:1;
+
+.admin-tabs .btn.is-active {
+  opacity: 1;
   border-color: color-mix(in oklab, var(--accent) 35%, var(--white-18));
   box-shadow: var(--ring);
 }
 
-/* Panel padding */
-.admin-panel{
-  padding: clamp(12px,2vw,20px);
+.admin-panel {
+  padding: clamp(12px, 2vw, 20px);
 }
 
-/* Form grid */
-.admin-form{
-  display:grid;
-  gap:12px;
-  align-items:end;
+.admin-form {
+  display: grid;
+  gap: 12px;
+  align-items: end;
 }
 
-/* Stations form: 2 inputs + button */
-.admin-form--stations{
+.admin-form--stations {
   grid-template-columns: 1fr 1fr auto;
 }
 
-/* Nodes form: select + 2 inputs + button */
-.admin-form--nodes{
-  grid-template-columns: 1fr 1fr 1fr auto;
+.admin-form--nodes-view {
+  grid-template-columns: 1fr;
 }
 
-/* On smaller screens stack everything */
-@media (max-width: 900px){
+@media (max-width: 900px) {
   .admin-form--stations,
-  .admin-form--nodes{
+  .admin-form--nodes-view {
     grid-template-columns: 1fr;
   }
-  .admin-form .btn{
-    width:100%;
+
+  .admin-form .btn {
+    width: 100%;
   }
 }
 
-/* Inputs style reuse */
-.admin-input{
-  width:100%;
-  padding:12px;
+.admin-input {
+  width: 100%;
+  padding: 12px;
 }
 
-/* Table wrapper */
-.admin-table-wrap{
-  overflow:auto;
+
+.admin-table-wrap {
+  overflow: auto;
   border-radius: 12px;
   border: 1px solid var(--white-10);
 }
 
-/* Table */
-.admin-table{
-  width:100%;
+.admin-table {
+  width: 100%;
   border-collapse: collapse;
   min-width: 760px;
 }
-.admin-table th{
-  text-align:left;
+
+.admin-table th {
+  text-align: left;
   color: var(--muted);
   font-weight: 600;
   padding: 10px;
   background: var(--white-04);
   border-bottom: 1px solid var(--white-10);
 }
-.admin-table td{
+
+.admin-table td {
   padding: 10px;
   border-top: 1px solid var(--white-10);
 }
 
-/* Make nodes table a bit wider */
-.admin-table--nodes{
-  min-width: 980px;
+.admin-table--nodes {
+  min-width: 760px;
 }
 
-/* Title row spacing */
-.admin-head{
-  display:flex;
-  gap:12px;
-  align-items:center;
-  justify-content:space-between;
-  flex-wrap:wrap;
+.admin-head {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
 }
 
-/* Small labels */
-.admin-label{
+.admin-label {
   color: var(--muted);
   font-size: .95rem;
   margin-bottom: 6px;
-  display:block;
+  display: block;
 }
 
-/* Little helper text */
-.admin-hint{
+.admin-hint {
   color: var(--muted);
   font-size: .9rem;
   margin-top: 10px;
 }
 
-/* Utilities */
-.mt-16{ margin-top: 16px; }
-.mb-16{ margin-bottom: 16px; }
+.mt-16 {
+  margin-top: 16px;
+}
+
+.mb-16 {
+  margin-bottom: 16px;
+}
+
+/* allow dropdown to escape cards */
+.container,
+.admin-panel,
+.chart-card,
+.admin-form,
+.admin-form--nodes-view {
+  overflow: visible !important;
+}
+
+.custom-select {
+  position: relative;
+  width: 100%;
+  z-index: 10000;
+}
+
+.custom-select-trigger {
+  width: 100%;
+  padding: 14px 44px 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--white-18);
+  background: var(--white-04);
+  color: var(--text);
+  font-weight: 700;
+  cursor: pointer;
+  position: relative;
+}
+
+.custom-select-trigger::after {
+  content: "";
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: translateY(-65%) rotate(45deg);
+}
+
+.custom-options {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  display: none;
+  z-index: 99999;
+  border-radius: 16px;
+  border: 1px solid var(--white-18);
+  background: var(--card);
+  box-shadow: 0 18px 40px rgba(0,0,0,.25);
+}
+
+.custom-select.open .custom-options {
+  display: block;
+}
+
+.custom-option {
+  padding: 13px 16px;
+  color: var(--text);
+  background: var(--card);
+  cursor: pointer;
+  font-weight: 600;
+  border-bottom: 1px solid var(--white-10);
+}
+
+.custom-option:hover,
+.custom-option.is-selected {
+  background: color-mix(in oklab, var(--accent) 18%, var(--card));
+  color: var(--text);
+}
+
+html[data-theme="light"] .custom-options {
+  background: #ffffff;
+}
+
+html[data-theme="light"] .custom-option {
+  background: #ffffff;
+  color: #172033;
+}
+
+html[data-theme="light"] .custom-option:hover,
+html[data-theme="light"] .custom-option.is-selected {
+  background: #dbeafe;
+  color: #0f172a;
+}
+
+html[data-theme="light"] .custom-select-trigger {
+  background: #eef2ff;
+  color: #172033;
+}
+
+
+/* dropdown must appear above the nodes table */
+#panelNodes .chart-card:first-child {
+  position: relative;
+  z-index: 1000;
+}
+
+#panelNodes .chart-card:last-child {
+  position: relative;
+  z-index: 1;
+}
+
+.custom-select {
+  position: relative;
+  z-index: 2000;
+}
+
+.custom-options {
+  z-index: 3000;
+  opacity: 1;
+  pointer-events: auto;
+  background: var(--card);
+}
+
+html[data-theme="light"] .custom-options {
+  background: #ffffff;
+}
+
+html[data-theme="dark"] .custom-options {
+  background: #1f2433;
+}
