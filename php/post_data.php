@@ -80,6 +80,43 @@ try {
         throw new Exception("Invalid station id");
     }
 
+    $check_station = mysqli_prepare($dbcnx, "
+        SELECT status 
+        FROM stations 
+        WHERE s_id = ? 
+        LIMIT 1
+    ");
+    mysqli_stmt_bind_param($check_station, 's', $s_id);
+    mysqli_stmt_execute($check_station);
+    $result = mysqli_stmt_get_result($check_station);
+
+    if (mysqli_num_rows($result) === 0) {
+        $insert_station = mysqli_prepare($dbcnx, "
+            INSERT INTO stations (s_id, s_name, status)
+            VALUES (?, ?, 'pending')
+        ");
+        mysqli_stmt_bind_param($insert_station, 'ss', $s_id, $s_name_clean);
+        mysqli_stmt_execute($insert_station);
+
+        http_response_code(202);
+        echo json_encode([
+            "status" => "pending",
+            "message" => "Station added as pending. Waiting for admin approval."
+        ]);
+        exit;
+    }
+
+    $station = mysqli_fetch_assoc($result);
+
+    if ($station['status'] !== 'approved') {
+        http_response_code(403);
+        echo json_encode([
+            "status" => "blocked",
+            "message" => "Station is not approved yet."
+        ]);
+        exit;
+    }
+
     $table_check = mysqli_query($dbcnx, "SHOW TABLES LIKE '{$table}'");
     $is_new_station_table = (mysqli_num_rows($table_check) === 0);
 
@@ -193,4 +230,6 @@ try {
     ]);
     exit;
 }
+
+
 ?>

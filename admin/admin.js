@@ -45,6 +45,8 @@ const API = {
   stations_create: '../php/admin/stations_create.php',
   stations_update: '../php/admin/stations_update.php',
   stations_delete: '../php/admin/stations_delete.php',
+  stations_approve: '../php/admin/stations_approve.php',
+  stations_reject: '../php/admin/stations_reject.php',
   nodes_list: '../php/admin/nodes_list.php'
 };
 
@@ -77,7 +79,7 @@ function renderStations(filter = '') {
   if (!rows.length) {
     tb.innerHTML = `
       <tr>
-        <td colspan="3" style="padding:12px; color:var(--muted);">
+        <td colspan="4" style="padding:12px; color:var(--muted);">
           No stations found.
         </td>
       </tr>
@@ -93,10 +95,20 @@ function renderStations(filter = '') {
                data-st-id="${esc(s.s_id)}"
                value="${esc(s.s_name)}">
       </td>
+
+      <td style="padding:10px; color:var(--muted);">
+      ${esc(s.status || 'unknown')}
+      </td>
+
       <td style="padding:10px; white-space:nowrap;">
         <button class="btn" data-act="st-save" data-sid="${esc(s.s_id)}">Save</button>
         <button class="btn" data-act="st-del" data-sid="${esc(s.s_id)}" style="margin-left:8px;">Delete</button>
-      </td>
+
+        ${String(s.status || '').trim().toLowerCase() === 'pending' ? `
+        <button class="btn" data-act="st-approve" data-sid="${esc(s.s_id)}" style="margin-left:8px;">Approve</button>
+        <button class="btn" data-act="st-reject" data-sid="${esc(s.s_id)}" style="margin-left:8px;">Reject</button>
+    ` : ''}
+        </td>
     </tr>
   `).join('');
 }
@@ -178,6 +190,21 @@ function renderNodes(filter = '') {
   `).join('');
 }
 
+let lastPendingIds = new Set();
+
+function showAdminMessage(message, type = 'info') {
+  const box = document.getElementById('adminMessage');
+  if (!box) return;
+
+  box.textContent = message;
+  box.className = `admin-message admin-message--${type}`;
+  box.style.display = 'block';
+
+  setTimeout(() => {
+    box.style.display = 'none';
+  }, 4000);
+}
+
 async function loadStations() {
   const selected = document.getElementById('nodeStationSelect')?.value || '';
 
@@ -186,6 +213,26 @@ async function loadStations() {
 
   renderStations(document.getElementById('stSearch')?.value || '');
   refillStationDropdown(selected);
+
+  const notice = document.getElementById('pendingNotice');
+  const pending = STATIONS.filter(s => 
+  String(s.status || '').trim().toLowerCase() === 'pending');
+
+  if (notice) {
+    notice.innerHTML = pending.length
+      ? `⚠️ ${pending.length} station(s) waiting for approval.`
+      : '';
+  }
+
+  const currentPendingIds = new Set(pending.map(s => s.s_id));
+
+  pending.forEach(s => {
+    if (!lastPendingIds.has(s.s_id)) {
+      showAdminMessage(`🔔 New weather station waiting for approval: ${s.s_id}`, 'warning');
+    }
+  });
+
+  lastPendingIds = currentPendingIds;
 }
 
 async function loadNodesForSelectedStation(s_id_param = null) {
@@ -270,6 +317,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (!s_name) return alert('Station name is required');
 
+      if (!confirm(`Save changes for station ${s_id}?`)) return;
+
       await postJSON(API.stations_update, { s_id, s_name });
       await reloadAll();
       return;
@@ -281,7 +330,33 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       await postJSON(API.stations_delete, { s_id });
       await reloadAll();
+      return;
     }
+
+    if (act === 'st-approve') {
+      const s_id = btn.dataset.sid;
+
+      if (!confirm(`Approve station ${s_id}?`)) return;
+
+      await postJSON(API.stations_approve, { s_id });
+      showAdminMessage(`✅ Station ${s_id} approved successfully.`, 'success');
+      await reloadAll();
+      return;
+    }
+
+    if (act === 'st-reject') {
+      const s_id = btn.dataset.sid;
+
+      if (!confirm(`Reject station ${s_id}?`)) return;
+
+      await postJSON(API.stations_reject, { s_id });
+      showAdminMessage(`🚫 Station ${s_id} rejected.`, 'warning');
+      await reloadAll();
+      return;
+    }
+
+
+
   });
 
   try {

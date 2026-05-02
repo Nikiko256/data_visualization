@@ -59,7 +59,7 @@
 .admin-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 760px;
+  min-width: 1050px;
 }
 
 .admin-table th {
@@ -232,4 +232,36 @@ html[data-theme="light"] .custom-options {
 
 html[data-theme="dark"] .custom-options {
   background: #1f2433;
+}
+
+.admin-table td:last-child {
+  min-width: 430px;
+}
+
+.admin-table td:last-child .btn {
+  margin-bottom: 6px;
+}
+
+.admin-message {
+  margin: 16px auto;
+  padding: 14px 18px;
+  border-radius: 14px;
+  max-width: 900px;
+  font-weight: 700;
+  border: 1px solid var(--white-18);
+}
+
+.admin-message--warning {
+  background: rgba(255, 193, 7, 0.15);
+  color: #ffd166;
+}
+
+.admin-message--success {
+  background: rgba(34, 197, 94, 0.15);
+  color: #86efac;
+}
+
+.admin-message--info {
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
 }
