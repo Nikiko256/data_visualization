@@ -205,6 +205,34 @@ function showAdminMessage(message, type = 'info') {
   }, 4000);
 }
 
+function updateNotifications() {
+  const badge = document.getElementById('notifBadge');
+  const list = document.getElementById('notifList');
+
+  if (!badge || !list) return;
+
+  const pending = STATIONS.filter(s =>
+    String(s.status || '').trim().toLowerCase() === 'pending'
+  );
+
+  if (!pending.length) {
+    badge.style.display = 'none';
+    badge.textContent = '0';
+    list.innerHTML = `<div class="notif-empty">No new notifications</div>`;
+    return;
+  }
+
+  badge.style.display = 'inline-block';
+  badge.textContent = pending.length;
+
+  list.innerHTML = pending.map(s => `
+    <div class="notif-item" data-sid="${esc(s.s_id)}">
+      <strong>New weather station</strong>
+      <small>${esc(s.s_name)} (${esc(s.s_id)}) waiting for approval</small>
+    </div>
+  `).join('');
+}
+
 async function loadStations() {
   const selected = document.getElementById('nodeStationSelect')?.value || '';
 
@@ -233,6 +261,7 @@ async function loadStations() {
   });
 
   lastPendingIds = currentPendingIds;
+  updateNotifications();
 }
 
 async function loadNodesForSelectedStation(s_id_param = null) {
@@ -259,6 +288,38 @@ async function loadNodesForSelectedStation(s_id_param = null) {
 
 document.getElementById('stationTrigger')?.addEventListener('click', () => {
   document.getElementById('stationDropdown').classList.toggle('open');
+});
+
+document.getElementById('notifBtn')?.addEventListener('click', () => {
+  const dropdown = document.getElementById('notifDropdown');
+  if (!dropdown) return;
+
+  dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.notif-wrap')) {
+    const dropdown = document.getElementById('notifDropdown');
+    if (dropdown) dropdown.style.display = 'none';
+  }
+});
+
+document.getElementById('notifList')?.addEventListener('click', e => {
+  const item = e.target.closest('.notif-item');
+  if (!item) return;
+
+  setTab('stations');
+
+  const sid = item.dataset.sid;
+  const input = document.querySelector(`input[data-st-id="${CSS.escape(sid)}"]`);
+
+  if (input) {
+    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    input.focus();
+  }
+
+  const dropdown = document.getElementById('notifDropdown');
+  if (dropdown) dropdown.style.display = 'none';
 });
 
 document.addEventListener('click', e => {
@@ -355,14 +416,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-
-
   });
 
   try {
     await reloadAll();
+    setInterval(loadStations, 10000);
   } catch (err) {
     console.error(err);
     alert('Admin API error: ' + (err.message || err));
   }
+
+
 });

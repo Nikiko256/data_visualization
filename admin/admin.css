@@ -49,7 +49,6 @@
   padding: 12px;
 }
 
-
 .admin-table-wrap {
   overflow: auto;
   border-radius: 12px;
@@ -74,6 +73,14 @@
 .admin-table td {
   padding: 10px;
   border-top: 1px solid var(--white-10);
+}
+
+.admin-table td:last-child {
+  min-width: 430px;
+}
+
+.admin-table td:last-child .btn {
+  margin-bottom: 6px;
 }
 
 .admin-table--nodes {
@@ -109,19 +116,154 @@
   margin-bottom: 16px;
 }
 
-/* allow dropdown to escape cards */
 .container,
 .admin-panel,
 .chart-card,
 .admin-form,
-.admin-form--nodes-view {
+.admin-form--nodes-view,
+.topbar {
   overflow: visible !important;
 }
 
+/* Header: bell left, title center, theme right */
+.admin-topbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+
+.admin-topbar h1 {
+  justify-self: center;
+}
+
+.admin-topbar > .notif-wrap {
+  justify-self: start;
+}
+
+.admin-topbar > #themeToggle {
+  justify-self: end;
+}
+
+/* Admin messages */
+.admin-message {
+  margin: 16px auto;
+  padding: 14px 18px;
+  border-radius: 14px;
+  max-width: 900px;
+  font-weight: 700;
+  border: 1px solid var(--white-18);
+}
+
+.admin-message--warning {
+  background: rgba(255, 193, 7, 0.15);
+  color: #ffd166;
+}
+
+.admin-message--success {
+  background: rgba(34, 197, 94, 0.15);
+  color: #86efac;
+}
+
+.admin-message--info {
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+}
+
+/* Notifications */
+.notif-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.notif-btn,
+#themeToggle {
+  width: 54px;
+  height: 54px;
+  min-width: 54px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notif-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: white;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 20px;
+  text-align: center;
+  z-index: 100000;
+}
+
+.notif-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 0;
+  right: auto;
+  width: 340px;
+  background: #1f2433;
+  color: #ffffff;
+  opacity: 1;
+  border: 1px solid var(--white-18);
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, .35);
+  z-index: 99999;
+  overflow: hidden;
+}
+
+html[data-theme="light"] .notif-dropdown {
+  background: #ffffff;
+  color: #172033;
+}
+
+.notif-title {
+  padding: 14px 16px;
+  font-weight: 800;
+  border-bottom: 1px solid var(--white-10);
+}
+
+.notif-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.notif-empty,
+.notif-item {
+  padding: 14px 16px;
+  color: inherit;
+}
+
+.notif-item {
+  border-bottom: 1px solid var(--white-10);
+  cursor: pointer;
+}
+
+.notif-item:hover {
+  background: var(--white-04);
+}
+
+.notif-item strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.notif-item small {
+  color: var(--muted);
+}
+
+/* Custom select */
 .custom-select {
   position: relative;
   width: 100%;
-  z-index: 10000;
+  z-index: 2000;
 }
 
 .custom-select-trigger {
@@ -156,11 +298,13 @@
   max-height: 280px;
   overflow-y: auto;
   display: none;
-  z-index: 99999;
+  z-index: 3000;
+  opacity: 1;
+  pointer-events: auto;
   border-radius: 16px;
   border: 1px solid var(--white-18);
   background: var(--card);
-  box-shadow: 0 18px 40px rgba(0,0,0,.25);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, .25);
 }
 
 .custom-select.open .custom-options {
@@ -202,8 +346,10 @@ html[data-theme="light"] .custom-select-trigger {
   color: #172033;
 }
 
+html[data-theme="dark"] .custom-options {
+  background: #1f2433;
+}
 
-/* dropdown must appear above the nodes table */
 #panelNodes .chart-card:first-child {
   position: relative;
   z-index: 1000;
@@ -212,56 +358,4 @@ html[data-theme="light"] .custom-select-trigger {
 #panelNodes .chart-card:last-child {
   position: relative;
   z-index: 1;
-}
-
-.custom-select {
-  position: relative;
-  z-index: 2000;
-}
-
-.custom-options {
-  z-index: 3000;
-  opacity: 1;
-  pointer-events: auto;
-  background: var(--card);
-}
-
-html[data-theme="light"] .custom-options {
-  background: #ffffff;
-}
-
-html[data-theme="dark"] .custom-options {
-  background: #1f2433;
-}
-
-.admin-table td:last-child {
-  min-width: 430px;
-}
-
-.admin-table td:last-child .btn {
-  margin-bottom: 6px;
-}
-
-.admin-message {
-  margin: 16px auto;
-  padding: 14px 18px;
-  border-radius: 14px;
-  max-width: 900px;
-  font-weight: 700;
-  border: 1px solid var(--white-18);
-}
-
-.admin-message--warning {
-  background: rgba(255, 193, 7, 0.15);
-  color: #ffd166;
-}
-
-.admin-message--success {
-  background: rgba(34, 197, 94, 0.15);
-  color: #86efac;
-}
-
-.admin-message--info {
-  background: rgba(59, 130, 246, 0.15);
-  color: #93c5fd;
 }

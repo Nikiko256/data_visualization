@@ -21,11 +21,24 @@
 
 <body>
   <div class="container">
-    <header class="topbar">
-      <div></div>
-      <h1>Admin Control Panel</h1>
-      <button class="btn" id="themeToggle" type="button" aria-label="Toggle theme">☀️</button>
-    </header>
+    <header class="topbar admin-topbar">
+  <div class="notif-wrap">
+    <button class="btn notif-btn" id="notifBtn" type="button">🔔</button>
+
+    <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
+
+    <div id="notifDropdown" class="notif-dropdown" style="display:none;">
+      <div class="notif-title">Notifications</div>
+      <div id="notifList" class="notif-list">
+        <div class="notif-empty">No new notifications</div>
+      </div>
+    </div>
+  </div>
+
+  <h1>Admin Control Panel</h1>
+
+  <button class="btn" id="themeToggle" type="button">🌙</button>
+</header>
 
     <section class="controls" style="grid-template-columns: 1fr;">
       <div class="admin-tabs">
@@ -130,6 +143,6 @@
   </div>
 
   <script src="../js/theme.js" defer></script>
-  <script src="admin.js?v=10" defer></script>
+  <script src="admin.js?v=31" defer></script>
 </body>
 </html>
