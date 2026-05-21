@@ -68,8 +68,14 @@ document.addEventListener('DOMContentLoaded', () => {
       li.textContent = station.s_name;
 
       li.addEventListener('click', () => {
-    window.location.href = `station.html?s_name=${encodeURIComponent(station.s_name)}`;
-    });
+        console.log('station object:', station);
+        console.log('selected_s_id:', station.s_id);
+
+        sessionStorage.setItem('selected_s_id', station.s_id);
+
+        window.location.href =
+          `station.html?s_name=${encodeURIComponent(station.s_name)}`;  
+      });
 
       listEl.appendChild(li);
     });

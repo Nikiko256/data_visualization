@@ -4,6 +4,8 @@ function esc(s) {
   ));
 }
 
+let isEditingStation = false;
+
 async function postJSON(url, payload) {
   const r = await fetch(url, {
     method: 'POST',
@@ -91,9 +93,9 @@ function renderStations(filter = '') {
     <tr>
       <td style="padding:10px; color:var(--muted);">${esc(s.s_id)}</td>
       <td style="padding:10px;">
-        <input class="time-select" style="width:100%; padding:10px;"
-               data-st-id="${esc(s.s_id)}"
-               value="${esc(s.s_name)}">
+        <input class="time-select station-name-input" style="width:100%; padding:10px;"
+          data-st-id="${esc(s.s_id)}"
+          value="${esc(s.s_name)}">
       </td>
 
       <td style="padding:10px; color:var(--muted);">
@@ -234,6 +236,8 @@ function updateNotifications() {
 }
 
 async function loadStations() {
+  if (isEditingStation) return;
+
   const selected = document.getElementById('nodeStationSelect')?.value || '';
 
   const st = await getJSON(API.stations_list);
@@ -365,6 +369,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     await reloadAll();
   });
 
+  document.body.addEventListener('focusin', e => {
+  if (e.target.matches('.station-name-input')) {
+    isEditingStation = true;
+  }
+  });
+
+  document.body.addEventListener('focusout', e => {
+    if (e.target.matches('.station-name-input')) {
+      setTimeout(() => {
+        isEditingStation = false;
+      }, 800);
+    }
+  });
+
   document.body.addEventListener('click', async e => {
     const btn = e.target.closest('button[data-act]');
     if (!btn) return;
@@ -379,8 +397,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!s_name) return alert('Station name is required');
 
       if (!confirm(`Save changes for station ${s_id}?`)) return;
+      isEditingStation = false;
 
       await postJSON(API.stations_update, { s_id, s_name });
+      showAdminMessage(`✅ Station ${s_id} updated successfully.`, 'success');
+
       await reloadAll();
       return;
     }

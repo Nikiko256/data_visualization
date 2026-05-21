@@ -1074,12 +1074,6 @@ function graphData(rows, station, node, containerId = 'nodeDataSection') {
   }
 }
 
-/* Auto-upgrade the top node select after DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-  const ns = document.getElementById('nodeSelect');
-  if (ns) window.upgradeToDropdown(ns, { variant: 'node' });
-}); */
-
 function calculateAverage(values, field) {
   let filtered = values.filter(v => Number.isFinite(v));
 

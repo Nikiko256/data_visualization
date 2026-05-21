@@ -8,6 +8,7 @@ function hidePageLoader() {
   if (loader) loader.classList.add('is-hidden');
 }
 
+
 function getParam(name) {
   return new URLSearchParams(window.location.search).get(name);
 }
@@ -113,6 +114,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   showPageLoader();
 
   const sName = getParam('s_name');
+  let sId = sessionStorage.getItem('selected_s_id');
+
+  if (!sId && sName) {
+    try {
+      const res = await fetch('https://users.iee.ihu.gr/~iee2019074/php/get_stations.php');
+      const data = await res.json();
+
+      if (data.status === 'success' && Array.isArray(data.stations)) {
+        const found = data.stations.find(st =>
+          String(st.s_name) === String(sName)
+        );
+
+        if (found) {
+          sId = found.s_id;
+          sessionStorage.setItem('selected_s_id', sId);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to recover station id:', err);
+    }
+  }
+  //let sId = sessionStorage.getItem('selected_s_name');
   const titleEl = document.getElementById('stationTitle');
   const nodeSelect = document.getElementById('nodeSelect');
   const nodeContainer = document.getElementById('nodeDataSection');
@@ -146,8 +169,37 @@ document.addEventListener('DOMContentLoaded', async () => {
             nodeContainer.innerHTML = `<p class="error">Failed to load charts: ${String(err.message || err)}</p>`;
           }
         }
-      });
+      })
+
+      const exportCsvBtn = document.getElementById('exportCsvBtn');
+
+if (exportCsvBtn) {
+  exportCsvBtn.addEventListener('click', () => {
+    const currentSId = sId || sessionStorage.getItem('selected_s_id');
+
+    if (!currentSId) {
+      alert('Station id is missing.');
+      return;
     }
+
+    if (!nodeSelect || !nodeSelect.value) {
+      alert('Please select a node first.');
+      return;
+    }
+
+    const selectedNode = nodeSelect.value;
+
+    const url =
+      `https://users.iee.ihu.gr/~iee2019074/php/export_data.php` +
+      `?s_id=${encodeURIComponent(currentSId)}` +
+      `&n_name=${encodeURIComponent(selectedNode)}`;
+
+    window.location.href = url;
+  });
+}
+
+    }
+
   } catch (err) {
     console.error(err);
     if (nodeContainer) {
