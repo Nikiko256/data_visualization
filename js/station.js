@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const nodeContainer = document.getElementById('nodeDataSection');
 
   if (titleEl) {
-    titleEl.textContent = `Station: ${sName ?? ''}`;
+    titleEl.textContent = `Σταθμός: ${sName ?? ''}`;
   }
 
   if (!sName) {

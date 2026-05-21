@@ -412,21 +412,24 @@ btn.addEventListener('click', (e) => {
 
 // ---------- Labels & wind helpers ----------
 const FRIENDLY_LABELS = {
-  soilTemp: 'Soil Temperature',
-  soilMoist: 'Soil Moisture',
-  airTemp: 'Air Temperature',
-  airHumid: 'Air Humidity',
-  pressure: 'Air Pressure',
-  airPressure: 'Air Pressure',
-  airPress: 'Air Pressure',
-  temp: 'Temperature',
-  humid: 'Humidity',
+  soilTemp: 'Θερμοκρασία Εδάφους',
+  soilMoist: 'Υγρασία Εδάφους',
+  airTemp: 'Θερμοκρασία Αέρα',
+  airHumid: 'Υγρασία Αέρα',
+  pressure: 'Πίεση Αέρα',
+  airPressure: 'Πίεση Αέρα',
+  airPress: 'Πίεση Αέρα',
+  rainDepth: 'Ύψος Βροχής',
+  rainfall: 'Υψος Βροχής',
+  rain: 'Βροχόπτωση',
+  temp: 'Θερμοκρασία',
+  humid: 'Υγρασία',
   co2: 'CO₂',
   tvoc: 'tVOC',
   light: 'Light',
   battery: 'Battery',
-  windSpeed: 'Wind Speed',
-  windGust: 'Wind Gust',
+  windSpeed: 'Ταχύτητα Ανέμου',
+  windGust: 'Ριπή Ανέμου',
 };
 
 // === Units (only the ones you specified) ===
@@ -438,6 +441,9 @@ const UNITS = {
   pressure: 'hPa',
   airPressure: 'hPa',
   airPress: 'hPa',
+  rainDepth: 'mm',
+  rainfall: 'mm',
+  rain: 'mm',
   windSpeed: 'km/h',
   windGust: 'km/h',
 };
@@ -549,7 +555,7 @@ function buildChartCard({ field, rows, station, node, large = false }) {
   const titleWrap = el('div', 'chart-title-wrap');
   titleWrap.appendChild(title);
 
-  const avgEl = el('div', 'chart-average', 'Average measurement over: -');
+  const avgEl = el('div', 'chart-average', 'Μέση τιμή σε χρονικό διάστημα: -');
   titleWrap.appendChild(avgEl);
 
 
@@ -609,8 +615,8 @@ function buildChartCard({ field, rows, station, node, large = false }) {
 
   const initialAverage = calculateAverage(values, field);
   avgEl.textContent = initialAverage == null
-    ? `Average measurement over ${rangeLabel(select.value)} : -` 
-    : `Average measurement over ${rangeLabel(select.value)} : ${initialAverage.toFixed(2)} ${unitForKey(field) || ''}`;
+    ? `Μέση τιμή σε χρονικό διάστημα ${rangeLabel(select.value)} : -` 
+    : `Μέση τιμή σε χρονικό διάστημα ${rangeLabel(select.value)} : ${initialAverage.toFixed(2)} ${unitForKey(field) || ''}`;
 
   const validCountInitial = values.filter(v => v != null).length;
 
@@ -731,8 +737,8 @@ function buildChartCard({ field, rows, station, node, large = false }) {
         const updatedAverage = calculateAverage(updatedData, field);
         chart.data.datasets[1].data = new Array(updatedData.length).fill(updatedAverage);
         avgEl.textContent = updatedAverage == null
-          ? `Average measurement over ${rangeLabel(val)} : -`   
-          : `Average measurement over ${rangeLabel(val)} : ${updatedAverage.toFixed(2)} ${unitForKey(field) || ''}`;
+          ? `Μέση τιμή σε χρονικό διάστημα ${rangeLabel(val)} : -`   
+          : `Μέση τιμή σε χρονικό διάστημα ${rangeLabel(val)} : ${updatedAverage.toFixed(2)} ${unitForKey(field) || ''}`;
 
         chart.data.datasets[0].data = updatedData;
 
@@ -749,14 +755,14 @@ function buildChartCard({ field, rows, station, node, large = false }) {
         chart.data.datasets[0].pointHoverRadius = 4;
         chart.data.datasets[0].pointBorderWidth = 0;
         chart.update();     
-        avgEl.textContent = `Average measurement over ${rangeLabel(val)} : -`;  
+        avgEl.textContent = `Μέση τιμή σε χρονικό διάστημα ${rangeLabel(val)} : -`;  
         chart.data.datasets[1].data = [];
         showInlineError(card, j?.message || 'No data for selected range.');
       }
     } catch (err) {
       card.classList.remove('skeleton');
       console.error(`Error fetching ${field}:`, err);
-      avgEl.textContent = `Average measurement over ${rangeLabel(val)} : -`;
+      avgEl.textContent = `Μέση τιμή σε χρονικό διάστημα ${rangeLabel(val)} : -`;
       chart.data.datasets[1].data = [];
       showInlineError(card, `Network/server error: ${String(err.message || err)}`);
     }
@@ -796,7 +802,7 @@ function buildWindCard({ rows, station, node, large = false }) {
   // Header
   const head = el('div', 'chart-head');
   //const nodeName = rows[0]?.n_name || '';
-  const title = el('div', 'chart-title', `Wind Direction`);
+  const title = el('div', 'chart-title', `Κατεύθυνση Ανέμου`);
   title.style.fontSize = 'clamp(16px, 2.2vw, 22px)';
 
   const titleWrap = el('div', 'chart-title-wrap');
@@ -881,7 +887,7 @@ function buildWindCard({ rows, station, node, large = false }) {
     data: {
       labels,                    // optional when using point.x; kept for consistency
       datasets: [{
-        label: 'Wind Direction',
+        label: 'Κατεύθυνση Ανέμου',
         data: points,
         parsing: true,
         showLine: false,
