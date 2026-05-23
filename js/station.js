@@ -43,13 +43,13 @@ async function loadNodeOptions(sName) {
   placeholderOpt.value = '';
   placeholderOpt.textContent = 'Select node';
   placeholderOpt.selected = true;
+  placeholderOpt.disabled = true;
   nodeSelect.appendChild(placeholderOpt);
 
-  placeholderOpt.disabled = true;
 
   const avgOpt = document.createElement('option');
   avgOpt.value = 'average_nodes';
-  avgOpt.textContent = 'average_nodes';
+  avgOpt.textContent = 'Μέσος όρος κόμβων';
   nodeSelect.appendChild(avgOpt);
 
   const res = await postSmart(
@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       })
 
-      const exportCsvBtn = document.getElementById('exportCsvBtn');
+const exportCsvBtn = document.getElementById('exportCsvBtn');
 
 if (exportCsvBtn) {
   exportCsvBtn.addEventListener('click', () => {
@@ -188,7 +188,9 @@ if (exportCsvBtn) {
     }
 
     const selectedNode = nodeSelect.value;
-
+    
+    console.log('Selected node for export:', selectedNode);
+    
     const url =
       `https://users.iee.ihu.gr/~iee2019074/php/export_data.php` +
       `?s_id=${encodeURIComponent(currentSId)}` +

@@ -808,7 +808,7 @@ function buildWindCard({ rows, station, node, large = false }) {
   const titleWrap = el('div', 'chart-title-wrap');
   titleWrap.appendChild(title);
 
-  const windInfoEl = el('div', 'chart-average', 'Επικρατούσα κατεύθυνση: -');
+  const windInfoEl = el('div', 'chart-average', 'Επικρατούσα κατεύθυνση σε χρονικό διάστημα: -');
   titleWrap.appendChild(windInfoEl);
 
   const select = el('select', 'time-select');
@@ -877,8 +877,8 @@ function buildWindCard({ rows, station, node, large = false }) {
   let { labels, points } = toSeries(rows);
   const initialDominant = calculateDominantWindDirection(rows);
   windInfoEl.textContent = initialDominant == null
-    ? `Επικρατούσα κατεύθυνση ${rangeLabel(select.value)}: -`
-    : `Επικρατούσα κατεύθυνση ${rangeLabel(select.value)}: ${initialDominant}`;
+    ? `Επικρατούσα κατεύθυνση σε χρονικό διάστημα ${rangeLabel(select.value)}: -`
+    : `Επικρατούσα κατεύθυνση σε χρονικό διάστημα ${rangeLabel(select.value)}: ${initialDominant}`;
   const dominantPoint = getDominantWindPoint(rows);
   // Build chart (dots only; no connecting line)
   const ctx = canvas.getContext('2d');
@@ -992,17 +992,17 @@ function buildWindCard({ rows, station, node, large = false }) {
         chart.update();
         const dominant = calculateDominantWindDirection(j.data);
         windInfoEl.textContent = dominant == null
-          ? `Επικρατούσα κατεύθυνση ${rangeLabel(val)}: -`
-          : `Επικρατούσα κατεύθυνση ${rangeLabel(val)}: ${dominant}`;
+          ? `Επικρατούσα κατεύθυνση σε χρονικό διάστημα ${rangeLabel(val)}: -`
+          : `Επικρατούσα κατεύθυνση σε χρονικό διάστημα ${rangeLabel(val)}: ${dominant}`;
 
       } else {
-        windInfoEl.textContent = `Επικρατούσα κατεύθυνση ${rangeLabel(val)}: -`;
+        windInfoEl.textContent = `Επικρατούσα κατεύθυνση σε χρονικό διάστημα ${rangeLabel(val)}: -`;
         showInlineError(card, j?.message || 'No data for selected range.');
       }
     } catch (err) {
       card.classList.remove('skeleton');
       console.error('Wind fetch error:', err);
-      windInfoEl.textContent = `Επικρατούσα κατεύθυνση ${rangeLabel(val)}: -`;
+      windInfoEl.textContent = `Επικρατούσα κατεύθυνση σε χρονικό διάστημα ${rangeLabel(val)}: -`;
       showInlineError(card, `Network/server error: ${String(err.message || err)}`);
     }
   });

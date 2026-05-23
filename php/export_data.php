@@ -1,50 +1,46 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
+error_reporting(0);
+
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 require_once __DIR__ . '/admin/_db.php';
 
-$db = db();
+$conn = db();
+$conn->set_charset('utf8mb4');
 
 $s_id = $_GET['s_id'] ?? '';
 $n_name = $_GET['n_name'] ?? '';
-$range = $_GET['range'] ?? 'all';
 
 if ($s_id === '') {
     http_response_code(400);
-    echo "Missing station id";
-    exit;
+    exit('Missing station id');
 }
 
-$table = 'station_' . $s_id;
-
-if (!preg_match('/^[a-zA-Z0-9_]+$/', $table)) {
+if ($n_name === '') {
     http_response_code(400);
-    echo "Invalid table name";
-    exit;
+    exit('Missing node name');
 }
 
+// Create correct table name, same logic as get_data.php
+$table = 'station_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $s_id);
 
-$displayName = 'station_data';
+// Check if table exists
+$check = $conn->query("SHOW TABLES LIKE '{$table}'");
 
-$nameStmt = $db->prepare("SELECT s_name FROM stations WHERE s_id = ?");
-$nameStmt->bind_param("s", $s_id);
-$nameStmt->execute();
-
-$nameResult = $nameStmt->get_result();
-
-if ($nameRow = $nameResult->fetch_assoc()) {
-    $displayName = $nameRow['s_name'];
+if ($check->num_rows === 0) {
+    http_response_code(404);
+    exit("Data table does not exist");
 }
-
-$displayName = preg_replace('/[^a-zA-Z0-9_-]+/', '_', $displayName);
 
 header('Content-Type: text/csv; charset=utf-8');
-header('Content-Disposition: attachment; filename="' . $displayName . '_data.csv"');
+header('Content-Disposition: attachment; filename="station_data.csv"');
 
 $output = fopen('php://output', 'w');
+
+// Για σωστά ελληνικά στο Excel
+fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
 
 fputcsv($output, [
     'Ημερομηνία',
@@ -55,54 +51,98 @@ fputcsv($output, [
     'Θερμοκρασία αέρα',
     'Υγρασία αέρα',
     'Πίεση αέρα',
-    'Βάθος βροχής',
+    'Ύψος βροχής',
     'Ταχύτητα ανέμου',
     'Κατεύθυνση ανέμου'
 ]);
 
-$sql = "
-    SELECT
-        created_at,
-        ? AS station_id,
-        n_name,
-        soilTemp,
-        soilMoist,
-        airTemp,
-        airHumid,
-        airPress,
-        rainDepth,
-        windSpeed,
-        windDirection
-    FROM `$table`
-    WHERE 1 = 1
-";
+if ($n_name === 'average_nodes') {
+    $sql = "
+        SELECT 
+            created_at,
+            'average_nodes' AS n_name,
+            AVG(soilTemp) AS soilTemp,
+            AVG(soilMoist) AS soilMoist,
+            AVG(airTemp) AS airTemp,
+            AVG(airHumid) AS airHumid,
+            AVG(airPress) AS airPress,
+            AVG(rainDepth) AS rainDepth,
+            AVG(windSpeed) AS windSpeed,
+            '-' AS windDirection
+        FROM `$table`
+        GROUP BY created_at
+        ORDER BY created_at DESC
+    ";
 
-$params = [$s_id];
-$types = "s";
+    $stmt = $conn->prepare($sql);
+}
+else if ($n_name === 'all') {
+    $sql = "
+        SELECT 
+            created_at,
+            n_name,
+            soilTemp,
+            soilMoist,
+            airTemp,
+            airHumid,
+            airPress,
+            rainDepth,
+            windSpeed,
+            windDirection
+        FROM `$table`
+        ORDER BY created_at DESC
+    ";
 
-if ($n_name !== '' && $n_name !== 'average_nodes') {
-    $sql .= " AND n_name = ?";
-    $params[] = $n_name;
-    $types .= "s";
+    $stmt = $conn->prepare($sql);
+}
+else {
+    $sql = "
+        SELECT 
+            created_at,
+            n_name,
+            soilTemp,
+            soilMoist,
+            airTemp,
+            airHumid,
+            airPress,
+            rainDepth,
+            windSpeed,
+            windDirection
+        FROM `$table`
+        WHERE n_name = ?
+        ORDER BY created_at DESC
+    ";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $n_name);
 }
 
-if ($range !== 'all') {
-    $sql .= " AND created_at >= DATE_SUB(NOW(), INTERVAL ? HOUR)";
-    $params[] = intval($range);
-    $types .= "i";
-}
-
-$sql .= " ORDER BY created_at DESC";
-
-$stmt = $db->prepare($sql);
-$stmt->bind_param($types, ...$params);
 $stmt->execute();
-
 $result = $stmt->get_result();
 
 while ($row = $result->fetch_assoc()) {
-    fputcsv($output, $row);
+    $date = '';
+    if (!empty($row['created_at'])) {
+        $date = date('d/m/Y H:i:s', strtotime($row['created_at']));
+    }
+    
+    fputcsv($output, [
+        $date,
+        $s_id,
+        $row['n_name'],
+        $row['soilTemp'],
+        $row['soilMoist'],
+        $row['airTemp'],
+        $row['airHumid'],
+        $row['airPress'],
+        $row['rainDepth'],
+        $row['windSpeed'],
+        $row['windDirection']
+    ]);
 }
 
+$stmt->close();
+$conn->close();
 fclose($output);
 exit;
+?>

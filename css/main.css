@@ -1048,3 +1048,14 @@ select:focus-visible{
   }
 }
 
+.station-controls-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.station-controls-row .time-select {
+  min-width: 220px;
+}
+
