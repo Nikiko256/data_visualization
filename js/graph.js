@@ -868,16 +868,20 @@ function buildWindCard({ rows, station, node, large = false }) {
   card.appendChild(box);
 
   // --- Build categorical series (points with y = direction label) ---
-  const Y_CATS = DIRS.map(d => d.full); // ["North", "North-East", ..., "North-West"]
+  const Y_CATS = [...DIRS.map(d => d.full), 'N/A']; // ["North", "North-East", ..., "North-West"]
 
   function toSeries(arr) {
     const labels = arr.map(r => r.created_at);
+
     const points = arr.map((r, i) => {
       const ts = labels[i];
       const deg = parseWindValue(r?.windDirection);
-      if (deg == null) return { x: ts, y: null };
+
+      if (deg == null) return { x: ts, y: 'N/A' };
+
       const dir = dirFromDeg(deg);
-      if (!dir) return { x: ts, y: null };
+
+      if (!dir) return { x: ts, y: 'N/A' };
       return { x: ts, y: dir.full, _deg: deg }; // _deg for tooltip
     });
     return { labels, points };
@@ -1081,8 +1085,8 @@ function graphData(rows, station, node, containerId = 'nodeDataSection') {
     const { card } = buildChartCard({ field, rows, station, node, large: false });
     container.appendChild(card);
   });
-
-  const hasWind = rows.some(r => r && r.windDirection != null && String(r.windDirection).trim() !== '');
+  
+  const hasWind = rows.some(r => r && Object.prototype.hasOwnProperty.call(r, 'windDirection'));
   if (hasWind) {
     const { card } = buildWindCard({ rows, station, node, large: false });
     container.appendChild(card);
