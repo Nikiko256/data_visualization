@@ -1,5 +1,5 @@
 <?php
-// Allow requests from anywhere (you can lock this down to your dev origin
+// Allow requests from anywhere 
 // "http://127.0.0.1:5500" instead of "*")
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
@@ -80,18 +80,25 @@ try {
 
     // Step 6: Fetch all data
     $result = mysqli_query($dbcnx, "SELECT * FROM `{$table}` ORDER BY created_at ASC");
+    
     $rows = [];
     while ($row = mysqli_fetch_assoc($result)) {
         $rows[] = $row;
     }
+
+    $lastResult = mysqli_query($dbcnx, "SELECT MAX(created_at) AS last_update FROM `{$table}`");
+    $lastRow = mysqli_fetch_assoc($lastResult);
+    $last_update =$lastRow['last_update'];
+
 
     // Step 7: Return JSON response
     echo json_encode([
         "status"   => "success",
         "s_id"     => $s_id,
         "s_name"   => $s_name,
+        "last_update" => $last_update,
         "data"     => $rows
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
 
     mysqli_close($dbcnx);
 

@@ -35,6 +35,20 @@
 
     <section id="nodeControlsSection" class="controls">
       <label for="nodeSelect">Επιλέξτε κόμβο:</label>
+
+      <div class="station-controls-row">
+        <select id="nodeSelect" class="clean-select">
+          <option value="">Επιλέξτε κόμβο</option>
+        </select>
+
+        <button id="exportCsvBtn" class="btn" type="button">
+          Export CSV
+        </button>
+      </div>
+    </section>
+    
+    <!--<section id="nodeControlsSection" class="controls">
+      <label for="nodeSelect">Επιλέξτε κόμβο:</label>
       <div>
         <select id="nodeSelect" class="time-select">
           <option value="">Επιλέξτε κόμβο:</option>
@@ -43,7 +57,7 @@
           Export CSV
         </button>
       </div>
-    </section>
+    </section> -->
 
     <section id="nodeDataSection" class="charts-container"></section>
   </div>

@@ -156,7 +156,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadNodeOptions(sName);
 
     if (nodeContainer) {
-      nodeContainer.innerHTML = '';
+      nodeContainer.innerHTML = `
+        <div class="station-info-panel">
+          <p class="empty-message">
+            📊 Επιλέξτε έναν κόμβο για να δείτε τα δεδομένα των μετρήσεων σας υπό τη μορφή γραφημάτων. 
+          </p> 
+
+          <div class="info-grid">
+            <div class="info-card">
+              <h3>Κόμβοι σταθμών</h3>
+              <p>
+                Κάθε κόμβος αντιπροσωπεύει έναν ESP32, στον οποίο είναι συνδεδεμένοι όλοι οι αισθητήρες. Εκείνοι
+                συλλέγουν 8 τύπους δεδομένων: θερμοκρασία χώματος & αέρα, υγρασία χώματος & αέρα, ταχύτητα  ανέμου, πίεση αέρα, ύψος βροχής και κατεύθυνση ανέμου.
+              </p>
+            </div>
+
+            <div class="info-card">
+              <h3>Μέσος όρος κόμβων</h3>
+              <p>
+                Η επιλογή <strong>Μέσος όρος κόμβων</strong> εμφανίζει τον μέσο όρο των δεδομένων 
+                από όλους τους διαθέσιμους κόμβους του σταθμού.
+              </p>
+            </div>
+
+            <div class="info-card">
+              <h3>Φιλτράρισμα δεδομένων ανά χρονικό διάστημα</h3>
+              <p>
+                Κάθε διάγραμμα μπορεί να φιλτραριστεί ανά χρονικό διάστημα, όπως 24ωρες μετρήσεις, 
+                48ωρες, εβδομαδιαίες, μηνιαίες, ετήσιες κ.ο.κ.
+              </p>
+            </div>
+
+          </div>
+        </div>
+        `;
     }
 
     if (nodeSelect) {
@@ -210,4 +243,14 @@ if (exportCsvBtn) {
   } finally {
     hidePageLoader();
   }
+});
+
+document.addEventListener('pointermove', e => {
+  const t = e.target.closest('.info-card');
+  if (!t) return;
+
+  const r = t.getBoundingClientRect();
+
+  t.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+  t.style.setProperty('--my', (e.clientY - r.top) + 'px');
 });

@@ -42,13 +42,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof item === 'string') {
       return {
         s_id: item,
-        s_name: item
+        s_name: item, 
+        status: 'offline',
+        last_update: null
       };
     }
 
     return {
       s_id: item.s_id,
-      s_name: item.s_name || `Station ${item.s_id}`
+      s_name: item.s_name || `Station ${item.s_id}`,
+      status: item.status || 'offline',
+      last_update: item.last_update || null
     };
   }
 
@@ -65,7 +69,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const li = document.createElement('li');
       li.className = 'station-item';
-      li.textContent = station.s_name;
+      //li.textContent = station.s_name;
+      li.innerHTML = `
+        <div class="station-icon">📡</div>
+        <h3>${station.s_name}</h3>
+
+        ${station.last_update ? `
+          <p><strong>Last update:</strong> ${station.last_update}</p>
+        ` : ''}
+
+        <p>${station.status ?? 'offline'}</p>
+      `;
+
 
       li.addEventListener('click', () => {
         console.log('station object:', station);

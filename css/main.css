@@ -1059,3 +1059,267 @@ select:focus-visible{
   min-width: 220px;
 }
 
+#stationsList {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  #stationsList {
+    grid-template-columns: 1fr;
+  }
+}
+
+.station-card {
+  min-height: 110px;
+  margin-bottom: 0;
+}
+
+.station-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* κοινό dropdown style */
+.clean-select,
+.time-select {
+  appearance: none;
+  -webkit-appearance: none;
+
+  min-width: 180px;
+  height: 42px;
+
+  padding: 0 42px 0 14px;
+
+  color: var(--text);
+  background:
+    var(--white-06)
+    linear-gradient(180deg, var(--transparent) 60%, var(--black-02));
+
+  border: 1px solid var(--white-18);
+  border-radius: 12px;
+
+  font-size: 0.92rem;
+  font-weight: 600;
+
+  cursor: pointer;
+  outline: none;
+
+  box-shadow: var(--shadow-sm) inset;
+
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 18px,
+    calc(100% - 12px) 18px;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+
+  transition:
+    border-color var(--transition),
+    background var(--transition),
+    box-shadow var(--transition),
+    transform var(--transition);
+}
+
+.clean-select:hover,
+.time-select:hover {
+  background-color: var(--white-10);
+  border-color: color-mix(in oklab, var(--accent) 45%, var(--white-10));
+}
+
+.clean-select:focus,
+.time-select:focus {
+  border-color: color-mix(in oklab, var(--accent) 60%, var(--white-10));
+  box-shadow: var(--ring);
+}
+
+.clean-select option,
+.time-select option {
+  background: var(--panel-bg);
+  color: var(--text);
+}
+
+/* node dropdown λίγο μεγαλύτερο */
+#nodeSelect {
+  min-width: 220px;
+}
+
+/* time range dropdown στα charts */
+.chart-head .time-select {
+  min-width: 130px;
+  height: 38px;
+  font-size: 0.85rem;
+}
+
+/* κινητό */
+@media (max-width: 768px) {
+  .controls {
+    grid-template-columns: 1fr;
+  }
+
+  .station-controls-row {
+    justify-content: stretch;
+  }
+
+  .clean-select,
+  .time-select,
+  #nodeSelect,
+  #exportCsvBtn {
+    width: 100%;
+  }
+}
+
+.controls {
+  grid-template-columns: auto 1fr;
+  padding: 18px 24px;
+  min-height: auto;
+}
+
+.controls label {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.station-controls-row {
+  justify-content: flex-end;
+}
+
+.station-info-panel{
+  grid-column: 1 / -1;
+  padding: 36px 24px;
+}
+
+.empty-message {
+  margin: 0 0 32px;
+
+  text-align: center;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.95rem;
+  line-height: 1.6;
+
+  color: var(--muted);
+  opacity: 0.55;
+}
+
+.info-grid {
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.info-card {
+  position: relative;
+  overflow: hidden;
+
+  padding: 18px 20px;
+
+  background: var(--white-04);
+  border: 1px solid var(--white-10);
+  border-radius: 16px;
+
+  box-shadow: var(--shadow-sm);
+
+  transition:
+    transform var(--transition),
+    background var(--transition),
+    border-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.info-card:hover {
+  transform: translateY(-2px);
+  background: var(--white-10);
+  border-color: color-mix(in oklab, var(--accent) 45%, var(--white-10));
+  box-shadow: var(--shadow-sm);
+}
+
+.info-card::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+
+  opacity: 0;
+  transition: opacity var(--transition);
+
+  background:
+    radial-gradient(
+      240px 140px at var(--mx, 50%) var(--my, 50%),
+      color-mix(in oklab, var(--accent) 25%, var(--transparent)) 0%,
+      var(--transparent) 60%
+    ),
+    radial-gradient(
+      240px 140px at var(--mx, 50%) var(--my, 50%),
+      color-mix(in oklab, var(--accent-2) 25%, var(--transparent)) 0%,
+      var(--transparent) 60%
+    );
+
+  pointer-events: none;
+}
+
+.info-card:hover::after {
+  opacity: 0.7;
+}
+
+.info-card h3,
+.info-card p {
+  position: relative;
+  z-index: 1;
+}
+
+.info-card h3 {
+  position: relative;
+  z-index: 1;
+
+  margin: 0 0 10px;
+
+  font-size: 1rem;
+  font-weight: 700;
+
+  color: var(--text);
+}
+
+.info-card p {
+  margin: 0;
+
+  font-size: 0.92rem;
+  font-weight: 400;
+  line-height: 1.65;
+
+  color: var(--muted);
+  opacity: 0.85;
+}
+
+@media (max-width: 900px) {
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+html[data-theme="light"] .empty-message {
+  color: #3f4f6f;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+html[data-theme="light"] .info-card h3 {
+  color: #1f2a44;
+}
+
+html[data-theme="light"] .info-card p {
+  color: #52627f;
+  opacity: 1;
+}
+
+
