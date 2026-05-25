@@ -41,7 +41,7 @@ async function loadNodeOptions(sName) {
 
   const placeholderOpt = document.createElement('option');
   placeholderOpt.value = '';
-  placeholderOpt.textContent = 'Select node';
+  placeholderOpt.textContent = 'Επιλογή κόμβου';
   placeholderOpt.selected = true;
   placeholderOpt.disabled = true;
   nodeSelect.appendChild(placeholderOpt);
