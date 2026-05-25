@@ -196,6 +196,7 @@ body{
     linear-gradient(135deg, var(--bg) 0%, var(--bg-2) 100%);
   background-attachment: fixed, fixed, fixed;
   padding: clamp(16px, 3vw, 32px);
+  font: 600 16px/1.6 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
 }
 
 /* 3) Container */
@@ -296,13 +297,28 @@ header h1{
 }
 
 /* 6) List */
-.stations-list{
+/*.stations-list{
   list-style: none;
   margin: 0;
   padding: 4px;
   display: grid;
   gap: 10px;
   grid-template-columns: 1fr;
+} */
+
+.stations-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.stations-list,
+.stations-grid {
+  padding: 24px;
+  box-sizing: border-box;
+  gap: 18px;
 }
 
 @container (min-width: 680px){
@@ -343,13 +359,19 @@ header h1{
   opacity:0;
   transition: opacity var(--transition);
   background:
-    radial-gradient(240px 140px at var(--mx,50%) var(--my,50%), color-mix(in oklab, var(--accent) 25%, var(--transparent)) 0%, var(--transparent) 60%),
-    radial-gradient(240px 140px at var(--mx,50%) var(--my,50%), color-mix(in oklab, var(--accent-2) 25%, var(--transparent)) 0%, var(--transparent) 60%);
+    radial-gradient(
+      320px 200px at var(--mx,50%) var(--my,50%), 
+      color-mix(in oklab, var(--accent) 12%, 
+      var(--transparent)) 0%, var(--transparent) 60%),
+    radial-gradient(
+      320px 200px at var(--mx,50%) var(--my,50%), 
+      color-mix(in oklab, var(--accent-2) 12%, 
+      var(--transparent)) 0%, var(--transparent) 60%);
   pointer-events:none;
 }
 
-.station-item:hover::after{
-  opacity:.7;
+.station-item:hover::after {
+  opacity: 0.35;
 }
 
 .station-title{
@@ -1062,10 +1084,10 @@ select:focus-visible{
 #stationsList {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
+  gap: 18px;
 
   list-style: none;
-  padding: 0;
+  padding: 24px;
   margin: 0;
 }
 
@@ -1196,7 +1218,7 @@ select:focus-visible{
 
 .station-info-panel{
   grid-column: 1 / -1;
-  padding: 36px 24px;
+  padding: 56px 40px;
 }
 
 .empty-message {
@@ -1214,15 +1236,18 @@ select:focus-visible{
 
 .info-grid {
   display:grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .info-card {
   position: relative;
   overflow: hidden;
 
-  padding: 18px 20px;
+  padding: 28px 30px;
+  min-height: 230px;
 
   background: var(--white-04);
   border: 1px solid var(--white-10);
@@ -1255,13 +1280,13 @@ select:focus-visible{
 
   background:
     radial-gradient(
-      240px 140px at var(--mx, 50%) var(--my, 50%),
-      color-mix(in oklab, var(--accent) 25%, var(--transparent)) 0%,
+      320px 200px at var(--mx, 50%) var(--my, 50%),
+      color-mix(in oklab, var(--accent) 15%, var(--transparent)) 0%,
       var(--transparent) 60%
     ),
     radial-gradient(
-      240px 140px at var(--mx, 50%) var(--my, 50%),
-      color-mix(in oklab, var(--accent-2) 25%, var(--transparent)) 0%,
+      320px 200px at var(--mx, 50%) var(--my, 50%),
+      color-mix(in oklab, var(--accent-2) 15%, var(--transparent)) 0%,
       var(--transparent) 60%
     );
 
@@ -1269,7 +1294,7 @@ select:focus-visible{
 }
 
 .info-card:hover::after {
-  opacity: 0.7;
+  opacity: 0.35;
 }
 
 .info-card h3,
@@ -1322,4 +1347,114 @@ html[data-theme="light"] .info-card p {
   opacity: 1;
 }
 
+/* Keep hover zoom/move */
+.station-item:hover {
+  transform: translateY(-2px);
+}
 
+/* Hide the line above the first row of stations while hovering */
+.container:has(#stationsList .station-item:nth-child(1):hover) .search-box,
+.container:has(#stationsList .station-item:nth-child(2):hover) .search-box {
+  border-bottom-color: transparent;
+}
+
+.container:has(#stationsList .station-item:nth-child(1):hover) header,
+.container:has(#stationsList .station-item:nth-child(2):hover) header {
+  border-bottom-color: transparent;
+}
+
+.search-box {
+  border-bottom: none;
+}
+
+.station-item {
+  padding: 22px 24px;
+  min-height: 145px;
+}
+
+.station-title,
+.station-item h3,
+.station-item strong {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  color: var(--text);
+}
+
+.station-item p,
+.station-item div {
+  font-size: 0.98rem;
+  line-height: 1.7;
+}
+
+.station-item {
+  color: rgba(232, 236, 243, 0.92);
+}
+
+.station-item b,
+.station-item strong {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+html[data-theme="light"] .station-item {
+  color: #26324f;
+}
+
+html[data-theme="light"] .station-title,
+html[data-theme="light"] .station-item h3,
+html[data-theme="light"] .station-item strong {
+  color: #111827;
+}
+
+html[data-theme="light"] .station-item p,
+html[data-theme="light"] .station-item div {
+  color: #334155;
+}
+
+.station-info-panel {
+  grid-column: 1 / -1;
+  padding: 48px 56px 64px;
+}
+
+.empty-message {
+  max-width: 1100px;
+  margin: 0 auto 44px;
+  text-align: center;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.info-card {
+  padding: 30px 34px;
+  min-height: 220px;
+}
+
+.info-card h3 {
+  font-size: 1.08rem;
+  margin-bottom: 14px;
+}
+
+.info-card p {
+  font-size: 0.95rem;
+  line-height: 1.75;
+}
+
+@media (max-width: 900px) {
+  .station-info-panel {
+    padding: 36px 24px;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .info-card {
+    min-height: auto;
+  }
+}

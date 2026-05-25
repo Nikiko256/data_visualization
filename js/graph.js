@@ -614,9 +614,13 @@ function buildChartCard({ field, rows, station, node, large = false }) {
   });
 
   const initialAverage = calculateAverage(values, field);
+  const initialMinMax = calculateMinMax(values, field);
+
   avgEl.textContent = initialAverage == null
     ? `Μέση τιμή σε χρονικό διάστημα ${rangeLabel(select.value)} : -` 
-    : `Μέση τιμή σε χρονικό διάστημα ${rangeLabel(select.value)} : ${initialAverage.toFixed(2)} ${unitForKey(field) || ''}`;
+    : `Μέση τιμή: ${initialAverage.toFixed(2)} ${unitForKey(field) || ''} • ` +
+      `Min: ${initialMinMax.min.toFixed(2)} ${unitForKey(field) || ''} •` +
+      `Max: ${initialMinMax.max.toFixed(2)} ${unitForKey(field) || ''}`;
 
   const validCountInitial = values.filter(v => v != null).length;
 
@@ -735,10 +739,15 @@ function buildChartCard({ field, rows, station, node, large = false }) {
         });
 
         const updatedAverage = calculateAverage(updatedData, field);
+        const updatedMinMax = calculateMinMax(updatedData, field);
+
         chart.data.datasets[1].data = new Array(updatedData.length).fill(updatedAverage);
+
         avgEl.textContent = updatedAverage == null
-          ? `Μέση τιμή σε χρονικό διάστημα ${rangeLabel(val)} : -`   
-          : `Μέση τιμή σε χρονικό διάστημα ${rangeLabel(val)} : ${updatedAverage.toFixed(2)} ${unitForKey(field) || ''}`;
+          ? `Μέση / Ελάχιστη / Μέγιστη τιμή με χρονικό διάστημα ${rangeLabel(val)} : -`   
+          : `Μέση: ${updatedAverage.toFixed(2)} ${unitForKey(field) || ''} • ` +
+            `Min: ${updatedMinMax.min.toFixed(2)} ${unitForKey(field) || ''} • ` +
+            `Max: ${updatedMinMax.max.toFixed(2)} ${unitForKey(field) || ''}`;
 
         chart.data.datasets[0].data = updatedData;
 
@@ -1091,6 +1100,24 @@ function calculateAverage(values, field) {
 
   const sum = filtered.reduce((acc, v) => acc + v, 0);
   return sum / filtered.length;
+}
+
+function calculateMinMax(values, field) {
+  let filtered = values.filter(v => Number.isFinite(v));
+
+  if (field === 'soilMoist') {
+    filtered = filtered.filter(v => v !== -10 && v !==100);
+  }
+
+  if (!filtered.length) {
+    return { min: null, max: null };
+  }
+
+  return {
+    min: Math.min(...filtered),
+    max: Math.max(...filtered)
+  };
+
 }
 
 
